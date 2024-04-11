@@ -19,6 +19,7 @@ Synth::SamplePlayback* jump_sample;
 
 Game* Game::instance = NULL;
 
+
 GameMap* map;
 
 // Fonts
@@ -162,16 +163,15 @@ double fps;
 
 
 sGameInfo revert[1000];
-int idx = 0;
-int idx_should = 0;
-int idx_lowest = 1;
+int idx = 0;		//
+int idx_should = 0; //
+int idx_lowest = 1; //
 bool reverting = false;
 bool overit = false;
 
-std::vector<hitBox> tuto_hitboxes;
-std::vector<hitBox> ground_hitboxes;
-std::vector<hitBox> platform_hitboxes;
-std::vector<hitBox> obstacle_hitboxes;
+std::vector<hitBox> ground_hitboxes;	//
+std::vector<hitBox> platform_hitboxes;	//
+std::vector<hitBox> obstacle_hitboxes;	//
 int sueloStatus = hitBox::NO_HIT;
 
 double tuto2 = 0;
