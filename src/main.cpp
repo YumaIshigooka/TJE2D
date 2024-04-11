@@ -208,6 +208,8 @@ int main(int argc, char **argv)
 
 	int w = 640;
 	int h = 480;
+	//int w = 160;
+	//int h = 120;
 
 	//create the game window 
 	SDL_Window* window = createWindow("TJE Game2D", w, h);

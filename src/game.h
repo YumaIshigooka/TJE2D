@@ -21,6 +21,7 @@ public:
 	int window_width;
 	int window_height;
 
+
 	//some globals
 	long frame;
     float time;
@@ -33,6 +34,14 @@ public:
 
 	//ctor
 	Game( int window_width, int window_height, SDL_Window* window );
+
+	//util
+	static int sign(float value) {
+		return value >= 0 ? 1 : -1;
+	}
+	static float norm(float target, float value) {
+		return abs(value) > target ? sign(value) * target : value;
+	}
 
 	//main functions
 	void render( void );

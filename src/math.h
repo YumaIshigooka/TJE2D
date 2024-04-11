@@ -100,6 +100,10 @@ public:
 	void set(float x, float y) { this->x = x; this->y = y; }
 
 	Vector2& normalize() { *this /= (float)length(); return *this; }
+	Vector2& normalize_unit(float unit) { 
+		(float)length() > unit ? *this /= (float)length() / unit : *this;
+		return *this; 
+	}
 
 	float distance(const Vector2& v);
 	Vector2& random(float range);

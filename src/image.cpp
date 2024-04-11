@@ -1,6 +1,7 @@
 #include "image.h"
 #include <algorithm>    // std::max, min, clamp
 #include "utils.h"
+#include "game.h"
 
 template <typename T> T clamp(const T& value, const T& low, const T& high)
 {
@@ -13,7 +14,6 @@ Image::Image() {
 	width = 0; height = 0;
 	pixels = NULL;
 }
-
 Image::Image(unsigned int width, unsigned int height)
 {
 	this->width = width;
@@ -480,3 +480,4 @@ Image* Image::Get(std::string name)
 	img->registerAs(name);
 	return img;
 }
+
