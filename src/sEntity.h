@@ -22,7 +22,7 @@ public:
 	int direction;
 	bool moving;
 	bool grounded;
-	hitBox hitbox;
+	hitBox* hitbox;
 
 	sEntity();
 

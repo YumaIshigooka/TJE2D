@@ -29,6 +29,22 @@ public:
 	int fps;
 	bool must_exit;
 
+	// Fonts
+	Image font, minifont, bigfont;
+
+	// Sprite/Tile Sets
+	Image sprite, sprite_mini;
+	Image explosion, grounding;
+	Image tileset;
+	Image keyset, select_arrows;
+	Image simple_box, opening_keys, clock_sprite;
+
+	Image tutorial_help1, tutorial_help2, tutorial_help3, tutorial_help4;
+
+	// Other
+	Image title_screen, pause_screen, revert_overlay;
+	Color bgcolor;
+
 	//audio
 	Synth synth;
 

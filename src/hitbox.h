@@ -9,11 +9,8 @@ public:
 	Vector2 t_r; // top right
 	Vector2 b_l; // bottom left
 	enum type_HB {
-		GROUND,
-		PLATFORM,
-		OBSTACLE,
-		INTERACTIBLE,
-		REUSABLE,
+		NONE = -1,
+		KEY_0
 	};
 	type_HB type;
 	enum {

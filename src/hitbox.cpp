@@ -5,7 +5,7 @@
 hitBox::hitBox(Vector2* t_r, Vector2* b_l) {
 	this->t_r = *t_r;
 	this->b_l = *b_l;
-	this->type = PLATFORM;
+	this->type = NONE;
 }
 
 hitBox::hitBox(Vector2* t_r, Vector2* b_l, type_HB type) {

@@ -16,6 +16,7 @@ Player::Player() {
 	this->teleporting = false;
 	this->teleportdistance = 0;
 	this->last_death = -5;
+	this->hitbox = new hitBox();
 }
 
 void Player::copy(Player* player_2) {
@@ -25,8 +26,8 @@ void Player::copy(Player* player_2) {
 	this->dv.x = player_2->dv.x; this->dv.y = player_2->dv.y;
 	this->direction = player_2->direction;
 	this->moving = player_2->moving;
-	this->hitbox.b_l.x = player_2->hitbox.b_l.x; hitbox.b_l.y = player_2->hitbox.b_l.y;
-	this->hitbox.t_r.x = player_2->hitbox.t_r.x; hitbox.t_r.y = player_2->hitbox.t_r.y;
+	this->hitbox->b_l.x = player_2->hitbox->b_l.x; this->hitbox->b_l.y = player_2->hitbox->b_l.y;
+	this->hitbox->t_r.x = player_2->hitbox->t_r.x; this->hitbox->t_r.y = player_2->hitbox->t_r.y;
 	this->grounded = player_2->grounded;
 	this->last_jumptime = player_2->last_jumptime;
 	this->active = player_2->active;
