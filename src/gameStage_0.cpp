@@ -372,7 +372,7 @@ void gameStage_0::update(double seconds_elapsed)
 									found = true;
 									std::cout << "STRONG\n";
 									break;
-								}
+								} 
 							}
 							std::cout << "\n";
 							if (!found) {
