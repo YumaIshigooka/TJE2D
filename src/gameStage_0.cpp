@@ -8,6 +8,8 @@ float Stage::jump = 120;
 float Stage::x_vel = 60;
 float Stage::bullet_vel = 180;
 
+
+
 sEntity box_breakable;
 sEntity key_tobreak;
 double box_break_time;
@@ -16,6 +18,61 @@ void addHitbox(std::vector<hitBox*> *l, float tr_x, float tr_y, float bl_x, floa
 	hitBox* h = new hitBox(new Vector2(tr_x, tr_y), new Vector2(bl_x, bl_y));
 	l->push_back(h);
 	return;
+}
+
+void drawAllAssets(Image& fb, camBorders cb, Player player, double tuto2_timer) {
+	GameMap::drawAsset(fb, Game::instance->tutorial_help1, Vector2(3 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
+	GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 1.5) % 2), 34, 17, 17), Vector2(10 * 8 + 4, 21 * 8 - 3), cb.cam_offset, player.coords);
+	GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 1.5 + 0.33) % 2), 4 * 17, 17, 17), Vector2(8 * 8 + 2, 19 * 8 - 5), cb.cam_offset, player.coords);
+	GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 1.5 + 0.69) % 2), 3 * 17, 17, 17), Vector2(6 * 8, 21 * 8 - 3), cb.cam_offset, player.coords);
+	GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 5 * 17, 17, 17), Vector2(8 * 8 + 2, 21 * 8 - 3), cb.cam_offset, player.coords);
+
+	GameMap::drawAsset(fb, Game::instance->tutorial_help2, Vector2(40 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
+	if (Game::instance->time - tuto2_timer < 0.66) {
+		GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int((Game::instance->time - tuto2_timer) * 6) % 2), 34, 17, 17), Vector2(47 * 8 + 8, 21 * 8 - 3), cb.cam_offset, player.coords);
+	}
+	else if ((Game::instance->time - tuto2_timer < 1.5)) {
+		GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 34, 17, 17), Vector2(47 * 8 + 8, 21 * 8 - 3), cb.cam_offset, player.coords);
+	}
+	else {
+		GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 34, 17, 17), Vector2(47 * 8 + 8, 21 * 8 - 3), cb.cam_offset, player.coords);
+		tuto2_timer = Game::instance->time;
+	}
+
+	GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 4 * 17, 17, 17), Vector2(45 * 8 + 6, 19 * 8 - 5), cb.cam_offset, player.coords);
+	GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 3 * 17, 17, 17), Vector2(43 * 8 + 4, 21 * 8 - 3), cb.cam_offset, player.coords);
+	GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 5 * 17, 17, 17), Vector2(45 * 8 + 6, 21 * 8 - 3), cb.cam_offset, player.coords);
+
+	GameMap::drawAsset(fb, Game::instance->tutorial_help3, Vector2(80 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
+	GameMap::drawAsset(fb, Game::instance->tutorial_help4, Vector2(112 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
+	GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 2) % 2), 0, 17, 17), Vector2(119 * 8, 16 * 8), cb.cam_offset, player.coords);
+
+	if (box_breakable.active) {
+		fb.drawImage(Game::instance->simple_box, box_breakable.coords.x + cb.cam_offset.x, box_breakable.coords.y + cb.cam_offset.y - 40, Area(0, 0, 13, 40));
+		fb.drawImage(Game::instance->opening_keys, box_breakable.coords.x + cb.cam_offset.x + 3, box_breakable.coords.y + cb.cam_offset.y - 22 + int(Game::instance->time * 2) % 2, Area(0, 0, 7, 4));
+	}
+	else if (Game::instance->time - box_break_time < 0.8) {
+		fb.drawImage(Game::instance->simple_box, box_breakable.coords.x + cb.cam_offset.x, box_breakable.coords.y + cb.cam_offset.y - 40, Area(13 * (int(8 * (Game::instance->time - box_break_time)) % 8), 0, 13, 40));
+	}
+	else {
+		fb.drawImage(Game::instance->simple_box, box_breakable.coords.x + cb.cam_offset.x, box_breakable.coords.y + cb.cam_offset.y - 40, Area(13 * 7, 0, 13, 40));
+	}
+	if (key_tobreak.active) {
+		fb.drawImage(Game::instance->opening_keys, key_tobreak.coords.x + cb.cam_offset.x, key_tobreak.coords.y + cb.cam_offset.y + int(Game::instance->time * 2) % 2, Area(0, 0, 7, 4));
+	}
+}
+
+void drawInterface(Image& fb, int idx_should, int idx_lowest, double last_fired, bool transitioning) {
+	fb.drawImage(Game::instance->clock_sprite, 7, 74, Area(transitioning * 9 * (int(Game::instance->time * 25) % 16) , 0, 9, 11));
+
+	fb.drawRectangle(9, 87, 5, 31, Color::GRAY);
+	fb.drawRectangle(10, 117 - 30 * (idx_should - idx_lowest) / 1000, 3, 30 * (idx_should - idx_lowest) / 1000, Color::CYAN);
+	fb.drawRectangle(2, 113, 5, 5, Color::GRAY);
+	fb.drawRectangle(3, 114, 3, 6 * Game::instance->norm(0.5, Game::instance->time - last_fired), Color::RED);
+	if (idx_should - idx_lowest == 999) {
+		fb.drawText("FULL", 5, 68, Game::instance->minifont_b, 4, 6);
+		fb.drawText("FULL", 4, 67, Game::instance->minifont, 4, 6);
+	}
 }
 
 gameStage_0::gameStage_0() {
@@ -67,7 +124,11 @@ gameStage_0::gameStage_0() {
 	cb.cam_offset = cb.cam_should;
 	cb.player_cam = { 0,0 };
 
-
+	for (int i = 0; i < N_BULLETS; i++)
+	{
+		bullets[i] = new sEntity();
+		bullets[i]->coords = { -float(i) * 1000, -float(i) * 1000 };
+	}
 
 	checkpoint = { 80, 216 };
 }
@@ -78,15 +139,16 @@ void gameStage_0::onEnter() {
 	idx_should = 0;
 	idx_lowest = 1;
 	reverting = false;
+
+	transitioning = false;
+	transition_start = Game::instance->time;
+	tr_in = true;
 }
 
 void gameStage_0::onLeave() {
 	if (paused) paused = !paused;
 }
 
-//gameStage_0::~gameStage_0() {
-//	for(hitBox h : )
-//}
 
 void gameStage_0::render(Image& fb) {
 	// FrameBuffer
@@ -96,142 +158,81 @@ void gameStage_0::render(Image& fb) {
 	int numtiles = 18;
 	Vector2 player_print_coords = { fb.width / 2 - player.size.x / 2 + cb.player_cam.x , fb.height / 2 - player.size.y / 2 + cb.player_cam.y };
 
-	if (paused) {
-		GameMap::drawTileset(map, cs, numtiles, Game::instance->tileset, fb, cb.cam_offset, Game::instance->time);
+	GameMap::drawTileset(map, cs, numtiles, Game::instance->tileset, fb, cb.cam_offset, Game::instance->time);
+
+	if (!player.teleporting) {
 		fb.drawImage(Game::instance->sprite_mini,
 			player_print_coords.x,
 			player_print_coords.y,
 			Area(player.moving * player.size.x * (int(Game::instance->time * 8) % 6),
 				player.direction * player.size.y,
 				player.size.x,
-				player.size.y));
+				player.size.y));	//draws only a part of an image
+	}
+	else if (Game::instance->time - player.last_death < 0.87) {
+		fb.drawImage(Game::instance->explosion,
+			player_print_coords.x - 12,
+			player_print_coords.y - 12,
+			Area(32 * ((int((Game::instance->time - player.last_death) * 8) % 8)),
+				7 * 32,
+				32,
+				32));	//draws only a part of an image
+	}
+	else {
+		Vector2 what = Vector2(player.velocity.x, player.velocity.y).normalize_unit(400) / 30;
+		std::cout << what.x << " " << what.y << "\n";
+		fb.drawLine(player_print_coords.x + 4,
+			player_print_coords.y + 4,
+			player_print_coords.x - what.x + 4,
+			player_print_coords.y - what.y + 4,
+			Color::RANDOM());
+	}
+
+	if (Game::instance->time - player.last_ground < 0.5) {
+		fb.drawImage(Game::instance->grounding,
+			player.last_ground_pos.x - 12 + cb.cam_offset.x,
+			player.last_ground_pos.y - 12 + cb.cam_offset.y,
+			Area(32 * ((int((Game::instance->time - player.last_ground) * 8) % 4)),
+				0,
+				32,
+				32));	//draws only a part of an image
+	}
 
 
+	drawAllAssets(fb, cb, player, tuto2_timer);
+	int bulletidx = 0;
+	for (int i = 0; i < N_BULLETS; i++) {
+		int screenx = bullets[i]->coords.x + cb.cam_offset.x;
+		int screeny = bullets[i]->coords.y + cb.cam_offset.y;
+		if (bullet_strong[i]) fb.drawLine(screenx, screeny, screenx + 3, screeny, Color::RANDOM());
+		else fb.drawLine(screenx, screeny, screenx + 3, screeny, Color::RED);
+	}
 
+	fb.drawText("FPS: " + toString(int(fps)), 125, 1, Game::instance->minifont, 4, 6);
+	fb.drawText("Fired: " + toString(bullet_fired[0]) + toString(bullet_fired[1]) + toString(bullet_fired[2]) + toString(bullet_fired[3]) + toString(bullet_fired[4]), 4, 1, Game::instance->minifont, 4, 6);
+	fb.drawText("Strong: " + toString(bullet_strong[0]) + toString(bullet_strong[1]) + toString(bullet_strong[2]) + toString(bullet_strong[3]) + toString(bullet_strong[4]), 4, 8, Game::instance->minifont, 4, 6);
+
+
+	if (reverting) {
+		fb.drawImage(Game::instance->revert_overlay, 0, 0);
+		fb.drawText(toString((float)(idx_should - idx_lowest) / fps), 30, 51, Game::instance->bigfont, 14, 18);
+	} 
+	drawInterface(fb, idx_should, idx_lowest, last_fired, transitioning);
+	if (paused) {
+		reverting = false;
+		idx_lowest = idx_should;
 		fb.drawImage(Game::instance->pause_screen, 0, 0);
 		fb.drawImage(Game::instance->select_arrows, 22, 20 + 31 * pause_option, Area(17 * (int(Game::instance->time * 3 / 2) % 2), pause_option * 17, 17, 17));
 	}
-	else {
-		fb.fill(Game::instance->bgcolor);	//fills the image with one color
+	if (transitioning) {
+		fb.drawRectangle(0, 0, fb.width,
+			(Game::instance->time - transition_start) * 3 * fb.height, Color::BLACK);
+		if ((Game::instance->time - transition_start) * 3 * fb.height > fb.height + 25) Game::instance->switch_stage(Game::stages::MENU);
 
-		// Size in pixels of a cell
-
-		GameMap::drawTileset(map, cs, numtiles, Game::instance->tileset, fb, cb.cam_offset, Game::instance->time);
-
-		GameMap::drawAsset(fb, Game::instance->tutorial_help1, Vector2(3 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
-		GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 1.5) % 2), 34, 17, 17), Vector2(10 * 8 + 4, 21 * 8 - 3), cb.cam_offset, player.coords);
-		GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 1.5 + 0.33) % 2), 4 * 17, 17, 17), Vector2(8 * 8 + 2, 19 * 8 - 5), cb.cam_offset, player.coords);
-		GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 1.5 + 0.69) % 2), 3 * 17, 17, 17), Vector2(6 * 8, 21 * 8 - 3), cb.cam_offset, player.coords);
-		GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 5 * 17, 17, 17), Vector2(8 * 8 + 2, 21 * 8 - 3), cb.cam_offset, player.coords);
-
-
-		GameMap::drawAsset(fb, Game::instance->tutorial_help2, Vector2(40 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
-		if (Game::instance->time - tuto2_timer < 0.66) {
-			GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int((Game::instance->time - tuto2_timer) * 6) % 2), 34, 17, 17), Vector2(47 * 8 + 8, 21 * 8 - 3), cb.cam_offset, player.coords);
-		}
-		else if ((Game::instance->time - tuto2_timer < 1.5)) {
-			GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 34, 17, 17), Vector2(47 * 8 + 8, 21 * 8 - 3), cb.cam_offset, player.coords);
-		}
-		else {
-			GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 34, 17, 17), Vector2(47 * 8 + 8, 21 * 8 - 3), cb.cam_offset, player.coords);
-			tuto2_timer = Game::instance->time;
-		}
-
-		GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 4 * 17, 17, 17), Vector2(45 * 8 + 6, 19 * 8 - 5), cb.cam_offset, player.coords);
-		GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 3 * 17, 17, 17), Vector2(43 * 8 + 4, 21 * 8 - 3), cb.cam_offset, player.coords);
-		GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 5 * 17, 17, 17), Vector2(45 * 8 + 6, 21 * 8 - 3), cb.cam_offset, player.coords);
-
-		GameMap::drawAsset(fb, Game::instance->tutorial_help3, Vector2(80 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
-
-		GameMap::drawAsset(fb, Game::instance->tutorial_help4, Vector2(112 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
-		GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 2) % 2), 0, 17, 17), Vector2(119 * 8, 16 * 8), cb.cam_offset, player.coords);
-
-
-
-		fb.drawText("FPS: " + toString(int(fps)), 125, 1, Game::instance->minifont, 4, 6);
-
-		if (!player.teleporting) {
-			fb.drawImage(Game::instance->sprite_mini,
-				player_print_coords.x,
-				player_print_coords.y,
-				Area(player.moving * player.size.x * (int(Game::instance->time * 8) % 6),
-					player.direction * player.size.y,
-					player.size.x,
-					player.size.y));	//draws only a part of an image
-			if (Game::instance->time - player.last_ground < 0.5) {
-				fb.drawImage(Game::instance->grounding,
-					player.last_ground_pos.x - 12 + cb.cam_offset.x,
-					player.last_ground_pos.y - 12 + cb.cam_offset.y,
-					Area(32 * ((int((Game::instance->time - player.last_ground) * 8) % 4)),
-						0,
-						32,
-						32));	//draws only a part of an image
-			}
-		}
-		else if (Game::instance->time - player.last_death < 0.87) {
-			fb.drawImage(Game::instance->explosion,
-				player_print_coords.x - 12,
-				player_print_coords.y - 12,
-				Area(32 * ((int((Game::instance->time - player.last_death) * 8) % 8)),
-					7 * 32,
-					32,
-					32));	//draws only a part of an image
-		}
-		else {
-			Vector2 what = Vector2(player.velocity.x, player.velocity.y).normalize_unit(400) / 30;
-			std::cout << what.x << " " << what.y << "\n";
-			fb.drawLine(player_print_coords.x + 4,
-				player_print_coords.y + 4,
-				player_print_coords.x - what.x + 4,
-				player_print_coords.y - what.y + 4,
-				Color::RANDOM());
-		}
-		fb.drawImage(Game::instance->clock_sprite, 148, 71, Area(9 * (int(Game::instance->time * 25) % 16), 0, 9, 11));
-
-		fb.drawRectangle(150, 84, 5, 31, Color::GRAY);
-		fb.drawRectangle(151, 85, 3, 30 * (idx_should - idx_lowest) / 1000, Color::CYAN);
-		fb.drawRectangle(143, 110, 5, 5, Color::GRAY);
-		fb.drawRectangle(144, 111, 3, 6 * Game::instance->norm(0.5, Game::instance->time - last_fired), Color::RED);
-
-		// Draw region of tileset inside framebuffer
-		// fb.drawImage(tileset, screenx, screeny, area);
-		for (sEntity bullet : bullets) {
-			int screenx = bullet.coords.x + cb.cam_offset.x;
-			int screeny = bullet.coords.y + cb.cam_offset.y;
-			fb.drawLine(screenx, screeny, screenx + 3, screeny, Color::RED);
-		}
-
-
-		fb.drawText("BoxBreak: " + toString(box_breakable.active) + " | KeyThing: " + toString(key_tobreak.active), 2, 2, Game::instance->minifont, 4, 6);
-		fb.drawText("TR: " + toString(box_breakable.hitbox->t_r.x) + ":" + toString(box_breakable.hitbox->t_r.y) +
-			" | BL: " + toString(box_breakable.hitbox->b_l.x) + ":" + toString(box_breakable.hitbox->b_l.y), 2, 9, Game::instance->minifont, 4, 6);
-
-		if (box_breakable.active) {
-			fb.drawImage(Game::instance->simple_box, box_breakable.coords.x + cb.cam_offset.x, box_breakable.coords.y + cb.cam_offset.y - 40, Area(0, 0, 13, 40));
-			fb.drawImage(Game::instance->opening_keys, box_breakable.coords.x + cb.cam_offset.x + 3, box_breakable.coords.y + cb.cam_offset.y - 22 + int(Game::instance->time * 2) % 2, Area(0, 0, 7, 4));
-		}
-		else if (Game::instance->time - box_break_time < 0.8) {
-			fb.drawImage(Game::instance->simple_box, box_breakable.coords.x + cb.cam_offset.x, box_breakable.coords.y + cb.cam_offset.y - 40, Area(13 * (int(8 * (Game::instance->time - box_break_time)) % 8), 0, 13, 40));
-		}
-		else {
-			fb.drawImage(Game::instance->simple_box, box_breakable.coords.x + cb.cam_offset.x, box_breakable.coords.y + cb.cam_offset.y - 40, Area(13 * 7, 0, 13, 40));
-		}
-		if (key_tobreak.active) {
-			fb.drawImage(Game::instance->opening_keys, key_tobreak.coords.x + cb.cam_offset.x, key_tobreak.coords.y + cb.cam_offset.y + int(Game::instance->time * 2) % 2, Area(0, 0, 7, 4));
-		}
-
-
-		// DRAW HITBOXES
-		//float player_print_hitbox[4] = { player_print_coords.x + player.size.x / 3, player_print_coords.y + player.size.y,
-		//							player_print_coords.x + player.size.x * 2 / 3, player_print_coords.y + player.size.y * 5 / 6 };
-		//fb.drawLine(player_print_hitbox[0], player_print_hitbox[1] - 1, player_print_hitbox[2], player_print_hitbox[3] - 1, Color::RED);
-		//fb.drawLine(player_print_hitbox[2], player_print_hitbox[1] - 1, player_print_hitbox[0], player_print_hitbox[3] - 1, Color::RED);
-
-
-		if (reverting) {
-			fb.drawImage(Game::instance->revert_overlay, 0, 0);
-			fb.drawText(toString((float)(idx_should - idx_lowest) / fps), 30, 51, Game::instance->bigfont, 14, 18);
-		}
+	} else if (tr_in) {
+		fb.drawRectangle(0, (Game::instance->time - transition_start) * 3 * fb.width, fb.width,
+			(1 - Game::instance->time + transition_start) * 3 * fb.height, Color::BLACK);
+		if (Game::instance->time - transition_start > .25) tr_in = false;
 	}
 }
 
@@ -239,25 +240,25 @@ void gameStage_0::render(Image& fb) {
 void gameStage_0::update(double seconds_elapsed)
 {
 	// std::cout << player.hitbox.collided(ground_hitboxes[0]);
-	if (paused) {
+	if (paused && !transitioning) {
 		if (Input::wasKeyPressed(SDL_SCANCODE_UP)) {
 			if (--pause_option < pauses::CONTINUE_GAME) pause_option = pauses::QUIT_GAME;
-			synth.playSample("data/sfx/select.wav", 0.6, false);
+			Game::instance->synth.playSample("data/sfx/select.wav", 0.6, false);
 		}
 		else if (Input::wasKeyPressed(SDL_SCANCODE_DOWN)) {
 			if (++pause_option > pauses::QUIT_GAME) pause_option = pauses::CONTINUE_GAME;
-			synth.playSample("data/sfx/select.wav", 0.6, false);
+			Game::instance->synth.playSample("data/sfx/select.wav", 0.6, false);
 		}
 		else if ((Input::wasKeyPressed(SDL_SCANCODE_N))) {
 			switch (pause_option) {
 			case pauses::CONTINUE_GAME: paused = !paused; break;
-			case pauses::BACK_MENU:  Game::instance->switch_stage(Game::stages::MENU); break; // TO DO: go back to menu
+			case pauses::BACK_MENU:  transitioning = true; transition_start = Game::instance->time; tr_in = false;  break; // TO DO: go back to menu
 			case pauses::QUIT_GAME:	Game::instance->must_exit = true; break;
 			}
-			synth.playSample("data/sfx/select.wav", 0.6, false);
+			Game::instance->synth.playSample("data/sfx/select.wav", 0.6, false);
 		}
 	}
-	else {
+	else if (!transitioning) {
 		if (player.coords.x > 100 * 8) checkpoint = Vector2(106 * 8, 24 * 8);
 
 		skip = (skip + 1) % 3;
@@ -268,6 +269,11 @@ void gameStage_0::update(double seconds_elapsed)
 			if (idx_should - idx_lowest > 999) idx_lowest++;
 			revert[idx].player.copy(&player);
 			revert[idx].camborders.copy(&cb);
+			for (int i = 0; i < N_BULLETS; i++)
+			{
+				/*if (bullet_fired[i] == true)*/ revert[idx].bullets[i] = *bullets[i];
+				revert[idx].bullet_fired[i] = bullet_fired[i];
+			}
 		}
 
 		if (Input::isKeyPressed(SDL_SCANCODE_M) && idx_should > idx_lowest) //if key right
@@ -277,6 +283,11 @@ void gameStage_0::update(double seconds_elapsed)
 			--idx_should;
 			player.copy(&revert[idx].player);
 			cb.copy(&revert[idx].camborders);
+			for (int i = 0; i < N_BULLETS; i++)
+			{
+				*bullets[i] = revert[idx].bullets[i];
+				bullet_fired[i] = revert[idx].bullet_fired[i];
+			}
 		}
 		else {
 			reverting = false;
@@ -302,7 +313,7 @@ void gameStage_0::update(double seconds_elapsed)
 					player.velocity.y = -jump;
 					player.grounded = false;
 					player.last_jumptime = Game::instance->time;
-					jump_sample = synth.playSample("data/sfx/jump.wav", 0.6, false);
+					jump_sample = Game::instance->synth.playSample("data/sfx/jump.wav", 0.6, false);
 				}
 			}
 			if (Input::isKeyPressed(SDL_SCANCODE_UP)) {
@@ -341,15 +352,33 @@ void gameStage_0::update(double seconds_elapsed)
 			}
 
 			if (Input::wasKeyPressed(SDL_SCANCODE_N)) {
-				if (Game::instance->time - last_fired > 0.5) {
-					for (int i = 0; i < 5; i++) {
+				if (Game::instance->time - last_fired > 0.02) {
+					for (int i = 0; i < N_BULLETS; i++) {
 						if (!bullet_fired[i]) {
 							last_fired = Game::instance->time;
-							bullet_fired[i] = true;
-							bullets[i].coords = player.coords + Vector2(0, 4);
-							synth.playSample("data/sfx/shoot.wav", 0.6, false);
-							if (player.direction == player.RIGHT) bullets[i].velocity = { bullet_vel, 0 };
-							else bullets[i].velocity = { -bullet_vel, 0 };
+							bool found = false;
+							for (int j = 0; j < N_BULLETS; j++) {
+								std::cout << (bullets[i]->coords.x - bullets[j]->coords.x) * (bullets[i]->coords.x - bullets[j]->coords.x) +
+									(bullets[i]->coords.y - bullets[j]->coords.y) * (bullets[i]->coords.y - bullets[j]->coords.y)/10000 << "\t";
+								if (j != i && 
+									!bullet_strong[j] && 
+									(bullets[i]->coords.x - bullets[j]->coords.x) * (bullets[i]->coords.x - bullets[j]->coords.x) +
+									(bullets[i]->coords.y - bullets[j]->coords.y) * (bullets[i]->coords.y - bullets[j]->coords.y) < 100) {
+									bullet_strong[j] = true;
+									found = true;
+									std::cout << "STRONG\n";
+									break;
+								}
+							}
+							std::cout << "\n";
+							if (!found) {
+								bullet_fired[i] = true;
+								bullet_strong[i] = false;
+								bullets[i]->coords = player.coords + Vector2(0, 4);
+								Game::instance->synth.playSample("data/sfx/shoot.wav", 0.6, false);
+								if (player.direction == player.RIGHT) bullets[i]->velocity = { bullet_vel, 0 };
+								else bullets[i]->velocity = { -bullet_vel, 0 };
+							}
 							break;
 						}
 					}
@@ -360,12 +389,12 @@ void gameStage_0::update(double seconds_elapsed)
 
 			for (int i = 0; i < N_BULLETS; i++) {
 				if (bullet_fired[i]) {
-					bullets[i].coords += bullets[i].velocity * seconds_elapsed;
-					bullets[i].hitbox->t_r = { bullets[i].coords.x + 2, bullets[i].coords.y };
-					bullets[i].hitbox->b_l = { bullets[i].coords.x, bullets[i].coords.y + 2 };
+					bullets[i]->coords += bullets[i]->velocity * seconds_elapsed;
+					bullets[i]->hitbox->t_r = { bullets[i]->coords.x + 2, bullets[i]->coords.y };
+					bullets[i]->hitbox->b_l = { bullets[i]->coords.x, bullets[i]->coords.y + 2 };
 					for (hitBox* h : *ground_hitboxes) {
-						if (bullets[i].hitbox->collided(h) || abs(bullets[i].coords.x - player.coords.x) > fb_size[0]) {
-							bullets[i].coords = { -1, -1 };
+						if (bullets[i]->hitbox->collided(h) || abs(bullets[i]->coords.x - player.coords.x) > fb_size[0]) {
+							bullets[i]->coords = { -float(i)  * 1000, -float(i) * 1000};
 							bullet_fired[i] = false;
 							break;
 						}
@@ -475,7 +504,7 @@ void gameStage_0::update(double seconds_elapsed)
 				if (player.hitbox->touching(h) || (Input::wasKeyPressed(SDL_SCANCODE_S) && !player.teleporting)) {
 					player.teleport(Vector2(checkpoint.x, checkpoint.y), seconds_elapsed, cb, Game::instance->time, synth);
 					player.last_death = Game::instance->time;
-					synth.playSample("data/sfx/rip.wav", 0.6, false);
+					Game::instance->synth.playSample("data/sfx/rip.wav", 0.6, false);
 				}
 			}
 
@@ -488,10 +517,16 @@ void gameStage_0::update(double seconds_elapsed)
 				if ((Game::instance->time - player.last_death) > .9) {
 					player.teleport(Vector2(checkpoint.x, checkpoint.y), seconds_elapsed, cb, Game::instance->time, synth);
 				}
-				if (!player.teleporting && !box_breakable.active) {
-					key_tobreak.active = true;
-					box_breakable.active = true;
-					box_breakable.hitbox->t_r.y -= 39;
+				if (!player.teleporting) {
+					if (!box_breakable.active) {
+						key_tobreak.active = true;
+						box_breakable.active = true;
+						box_breakable.hitbox->t_r.y -= 39;
+					}
+					for (int i = 0; i < N_BULLETS; i++) {
+						bullets[i]->coords = { -1, -1 };
+						bullet_fired[i] = false;
+					}
 				}
 			}
 		}
@@ -506,7 +541,7 @@ void gameStage_0::update(double seconds_elapsed)
 
 
 		if (Input::wasKeyPressed(SDL_SCANCODE_M)) {
-			synth.playSample("data/sfx/reverse.wav");
+			Game::instance->synth.playSample("data/sfx/reverse.wav");
 			reverting = true;
 		}
 	}

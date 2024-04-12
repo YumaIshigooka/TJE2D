@@ -31,8 +31,9 @@ public:
 	int fps;
 	bool must_exit;
 
+
 	// Fonts
-	Image font, minifont, bigfont;
+	Image font, minifont, bigfont, minifont_b;
 
 	// Sprite/Tile Sets
 	Image sprite, sprite_mini;

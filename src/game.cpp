@@ -13,6 +13,7 @@
 #include "json.hpp"
 
 
+double last_transition;
 
 
 gameStage_0* tutorial;
@@ -34,12 +35,15 @@ Stage* current_stage;
 
 Game::Game(int window_width, int window_height, SDL_Window* window)
 {
+	Vector2 caca;
+	caca.length();
 	//stage_map = new std::unordered_map<Game::stages, Stage*>;
 	stage_map[Game::stages::MENU] = menu;
 	stage_map[Game::stages::STAGE0] = tutorial;
 
 	font.loadTGA("data/bitmap-font-white.tga");
 	minifont.loadTGA("data/mini-font-white-4x6.tga");
+	minifont_b.loadTGA("data/mini-font-black-4x6.tga");
 	bigfont.loadTGA("data/big-font-white-14x18.tga");
 
 	sprite.loadTGA("data/spritesheet.tga");
@@ -91,6 +95,9 @@ void Game::switch_stage(Game::stages new_stage_id) {
 	//current_stage = tutorial;
 
 	// He intentado hacerlo con un map pero el puntero no se reescribia bien.
+	
+	
+
 	current_stage->onLeave();
 	switch (new_stage_id) {
 	case stages::MENU:

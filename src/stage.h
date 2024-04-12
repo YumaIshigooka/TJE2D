@@ -16,6 +16,8 @@
 struct sGameInfo {
 	Player player;
 	camBorders camborders;
+	sEntity bullets[N_BULLETS];
+	bool bullet_fired[N_BULLETS];
 
 	enum saveState : uint8 {
 		DEFAULT_NO_SAVESTATE_CHANGE = -1, SAVESTATE_SAVED, SAVESTATE_LOADED
@@ -91,8 +93,9 @@ public:
 
 	// Player & Bullets
 	Player player;
-	sEntity bullets[N_BULLETS];
-	bool bullet_fired[5] = { false, false, false, false, false };
+	sEntity* bullets[N_BULLETS];
+	bool bullet_fired[N_BULLETS] = { false, false, false, false, false };
+	bool bullet_strong[N_BULLETS] = { false, false, false, false, false };
 
 	Vector2 checkpoint;
 	camBorders cb;
@@ -122,6 +125,10 @@ public:
 	// Audio
 	Synth synth;
 	Synth::SamplePlayback* jump_sample;
+
+	bool transitioning = false;
+	bool tr_in = true;
+	double transition_start = -10;
 
 	int fb_size[2] = {160, 120};
 
