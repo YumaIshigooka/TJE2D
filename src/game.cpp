@@ -8,14 +8,15 @@
 #include "camBorders.h"
 #include "gameMap.h"
 #include "gameStage_0.h"
+#include "menuStage.h"
 #include "stage.h"
 #include "json.hpp"
 
-#include <fstream>
-#include <cmath>
+
 
 
 gameStage_0* tutorial;
+menuStage* menu;
 
 Game* Game::instance = NULL;
 
@@ -24,22 +25,19 @@ GameMap* map;
 
 Color bgcolor(130, 80, 100);
 
-enum stages {
-	MENU,
-	STAGE0,
-	STAGE1
-};
-std::unordered_map<stages, Stage*> stage_map;
-stages current_stage = stages::MENU;
 
 
+std::unordered_map<Game::stages, Stage*> stage_map;
+Game::stages current_stage_id = Game::stages::MENU;
+Stage* current_stage;
 
-void switch_stage(stages new_stage) {
-	current_stage = new_stage;
-}
 
 Game::Game(int window_width, int window_height, SDL_Window* window)
 {
+	//stage_map = new std::unordered_map<Game::stages, Stage*>;
+	stage_map[Game::stages::MENU] = menu;
+	stage_map[Game::stages::STAGE0] = tutorial;
+
 	font.loadTGA("data/bitmap-font-white.tga");
 	minifont.loadTGA("data/mini-font-white-4x6.tga");
 	bigfont.loadTGA("data/big-font-white-14x18.tga");
@@ -75,34 +73,62 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	frame = 0;
 	time = 0.0f;
 	elapsed_time = 0.0f;
-
+	
+	menu = new menuStage();
 	tutorial = new gameStage_0();
+	current_stage = menu;
 
 	enableAudio(); //enable this line if you plan to add audio to your application
 }
 
+void Game::switch_stage(Game::stages new_stage_id) {
+	////current_stage_id = new_stage;
+	//std::cout << new_stage_id;
+	//Stage* new_stage;
+	//std::unordered_map<Game::stages, Stage*>::const_iterator pair = stage_map.find(new_stage_id);
+	//current_stage = pair->second;
+	//std::cout << current_stage;
+	//current_stage = tutorial;
+
+	// He intentado hacerlo con un map pero el puntero no se reescribia bien.
+	current_stage->onLeave();
+	switch (new_stage_id) {
+	case stages::MENU:
+		current_stage = menu;
+		break;
+	case stages::STAGE0:
+		current_stage = tutorial;
+		break;
+	}
+	current_stage->onEnter();
+	return;
+}
 
 
 //what to do when the image has to be draw
 void Game::render(void)
 {
-	tutorial->render();
+	Image fb(160, 120);
+
+	current_stage->render(fb);
+
+	showFramebuffer(&fb);
 }
 
 void Game::update(double seconds_elapsed)
 {
-	tutorial->update(seconds_elapsed);
+	current_stage->update(seconds_elapsed);
 }
 
 //Keyboard event handler (sync input)
 void Game::onKeyDown(SDL_KeyboardEvent event)
 {
-	tutorial->onKeyDown(event);
+	current_stage->onKeyDown(event);
 }
 
 void Game::onKeyUp(SDL_KeyboardEvent event)
 {
-	tutorial->onKeyUp(event);
+	current_stage->onKeyUp(event);
 }
 
 
@@ -250,3 +276,5 @@ void Game::onAudio(float* buffer, unsigned int len, double time, SDL_AudioSpec& 
 	//fill the audio buffer using our custom retro synth
 	synth.generateAudio(buffer, len, audio_spec);
 }
+
+

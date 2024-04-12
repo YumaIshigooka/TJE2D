@@ -9,6 +9,8 @@
 #include "image.h"
 #include "utils.h"
 #include "synth.h"
+#include <fstream>
+#include <cmath>
 
 class Game
 {
@@ -48,6 +50,13 @@ public:
 	//audio
 	Synth synth;
 
+	// Stages
+	enum stages {
+		MENU = 1,
+		STAGE0,
+		STAGE1
+	};
+
 	//ctor
 	Game( int window_width, int window_height, SDL_Window* window );
 
@@ -58,12 +67,16 @@ public:
 	static float norm(float target, float value) {
 		return abs(value) > target ? sign(value) * target : value;
 	}
+	
 
 	//main functions
 	void render( void );
 	void update( double dt );
 
 	void showFramebuffer(Image* img);
+
+	//switcg stage
+	void switch_stage(Game::stages new_stage);
 
 	//events
 	void onKeyDown( SDL_KeyboardEvent event );

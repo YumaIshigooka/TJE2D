@@ -127,9 +127,11 @@ public:
 
 	// Main Functions
 		//main functions
-	virtual void render(void) {};
+	virtual void render(Image& fb) {};
 	virtual void update(double dt) {};
 
+	virtual void onEnter() {};
+	virtual void onLeave() {};
 
 	//events
 	virtual void onKeyDown(SDL_KeyboardEvent event) {};

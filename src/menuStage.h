@@ -1,5 +1,5 @@
-#ifndef STAGE0_H
-#define STAGE0_H
+#ifndef MENUSTAGE_H
+#define MENUSTAGE_H
 
 #include "includes.h"
 #include "gameMap.h"
@@ -14,12 +14,12 @@
 #include <fstream>
 
 
-class gameStage_0 : public Stage {
+class menuStage : public Stage {
 public:
 
 
 	// Constructor
-	gameStage_0();
+	menuStage();
 
 	// Main Functions
 		//main functions
@@ -28,7 +28,6 @@ public:
 
 	void onEnter();
 	void onLeave();
-
 
 	//events
 	void onKeyDown(SDL_KeyboardEvent event);
