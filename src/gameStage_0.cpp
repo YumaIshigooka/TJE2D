@@ -13,6 +13,7 @@ float Stage::bullet_vel = 180;
 sEntity box_breakable;
 sEntity key_tobreak;
 double box_break_time;
+double bullet_reverse = -10;
 
 void addHitbox(std::vector<hitBox*> *l, float tr_x, float tr_y, float bl_x, float bl_y) {
 	hitBox* h = new hitBox(new Vector2(tr_x, tr_y), new Vector2(bl_x, bl_y));
@@ -271,7 +272,7 @@ void gameStage_0::update(double seconds_elapsed)
 			revert[idx].camborders.copy(&cb);
 			for (int i = 0; i < N_BULLETS; i++)
 			{
-				/*if (bullet_fired[i] == true)*/ revert[idx].bullets[i] = *bullets[i];
+				revert[idx].bullets[i] = *bullets[i];
 				revert[idx].bullet_fired[i] = bullet_fired[i];
 			}
 		}
@@ -285,6 +286,7 @@ void gameStage_0::update(double seconds_elapsed)
 			cb.copy(&revert[idx].camborders);
 			for (int i = 0; i < N_BULLETS; i++)
 			{
+				if (bullet_fired[i] == true && bullet_fired[i] != revert[idx].bullet_fired[i]) bullet_reverse = Game::instance->time;
 				*bullets[i] = revert[idx].bullets[i];
 				bullet_fired[i] = revert[idx].bullet_fired[i];
 			}
@@ -358,12 +360,14 @@ void gameStage_0::update(double seconds_elapsed)
 							last_fired = Game::instance->time;
 							bool found = false;
 							for (int j = 0; j < N_BULLETS; j++) {
-								std::cout << (bullets[i]->coords.x - bullets[j]->coords.x) * (bullets[i]->coords.x - bullets[j]->coords.x) +
-									(bullets[i]->coords.y - bullets[j]->coords.y) * (bullets[i]->coords.y - bullets[j]->coords.y)/10000 << "\t";
+								//std::cout << (bullets[i]->coords.x - bullets[j]->coords.x) * (bullets[i]->coords.x - bullets[j]->coords.x) / 1000000 +
+								//	(bullets[i]->coords.y - bullets[j]->coords.y) * (bullets[i]->coords.y - bullets[j]->coords.y)/1000000 << "\t";
+								std::cout << (player.coords.x - bullets[j]->coords.x) * (player.coords.x - bullets[j]->coords.x) +
+									(player.coords.y - bullets[j]->coords.y) * (player.coords.y - bullets[j]->coords.y) << "\t";
 								if (j != i && 
 									!bullet_strong[j] && 
-									(bullets[i]->coords.x - bullets[j]->coords.x) * (bullets[i]->coords.x - bullets[j]->coords.x) +
-									(bullets[i]->coords.y - bullets[j]->coords.y) * (bullets[i]->coords.y - bullets[j]->coords.y) < 100) {
+									(player.coords.x - bullets[j]->coords.x) * (player.coords.x - bullets[j]->coords.x) +
+									(player.coords.y - bullets[j]->coords.y) * (player.coords.y - bullets[j]->coords.y) < 800 || Game::instance->time - bullet_reverse < 0.5) {
 									bullet_strong[j] = true;
 									found = true;
 									std::cout << "STRONG\n";
@@ -394,7 +398,7 @@ void gameStage_0::update(double seconds_elapsed)
 					bullets[i]->hitbox->b_l = { bullets[i]->coords.x, bullets[i]->coords.y + 2 };
 					for (hitBox* h : *ground_hitboxes) {
 						if (bullets[i]->hitbox->collided(h) || abs(bullets[i]->coords.x - player.coords.x) > fb_size[0]) {
-							bullets[i]->coords = { -float(i)  * 1000, -float(i) * 1000};
+							bullets[i]->coords = { -float(i)  * 10000, -float(i) * 10000};
 							bullet_fired[i] = false;
 							break;
 						}
