@@ -8,7 +8,7 @@ float Stage::jump = 120;
 float Stage::x_vel = 60;
 float Stage::bullet_vel = 180;
 
-
+bool bullet_fired_while_reverse = false;
 
 sEntity box_breakable;
 sEntity key_tobreak;
@@ -205,7 +205,7 @@ void gameStage_0::render(Image& fb) {
 	for (int i = 0; i < N_BULLETS; i++) {
 		int screenx = bullets[i]->coords.x + cb.cam_offset.x;
 		int screeny = bullets[i]->coords.y + cb.cam_offset.y;
-		if (bullet_strong[i]) fb.drawLine(screenx, screeny, screenx + 3, screeny, Color::RANDOM());
+		if (bullet_strong[i]) fb.drawRectangle(screenx-1, screeny, 5, 3, Color::RANDOM());
 		else fb.drawLine(screenx, screeny, screenx + 3, screeny, Color::RED);
 	}
 
@@ -213,6 +213,7 @@ void gameStage_0::render(Image& fb) {
 	fb.drawText("Fired: " + toString(bullet_fired[0]) + toString(bullet_fired[1]) + toString(bullet_fired[2]) + toString(bullet_fired[3]) + toString(bullet_fired[4]), 4, 1, Game::instance->minifont, 4, 6);
 	fb.drawText("Strong: " + toString(bullet_strong[0]) + toString(bullet_strong[1]) + toString(bullet_strong[2]) + toString(bullet_strong[3]) + toString(bullet_strong[4]), 4, 8, Game::instance->minifont, 4, 6);
 
+	fb.drawText(toString(Game::instance->time - bullet_reverse) + " " + toString(bullet_fired_while_reverse), 4, 15, Game::instance->minifont, 4, 6);
 
 	if (reverting) {
 		fb.drawImage(Game::instance->revert_overlay, 0, 0);
@@ -353,35 +354,42 @@ void gameStage_0::update(double seconds_elapsed)
 				player.velocity.x = x_vel;
 			}
 
-			if (Input::wasKeyPressed(SDL_SCANCODE_N)) {
+			if (Input::wasKeyPressed(SDL_SCANCODE_N) || bullet_fired_while_reverse) {
+				bullet_fired_while_reverse = false;
 				if (Game::instance->time - last_fired > 0.02) {
 					for (int i = 0; i < N_BULLETS; i++) {
 						if (!bullet_fired[i]) {
 							last_fired = Game::instance->time;
 							bool found = false;
-							for (int j = 0; j < N_BULLETS; j++) {
-								//std::cout << (bullets[i]->coords.x - bullets[j]->coords.x) * (bullets[i]->coords.x - bullets[j]->coords.x) / 1000000 +
-								//	(bullets[i]->coords.y - bullets[j]->coords.y) * (bullets[i]->coords.y - bullets[j]->coords.y)/1000000 << "\t";
-								std::cout << (player.coords.x - bullets[j]->coords.x) * (player.coords.x - bullets[j]->coords.x) +
-									(player.coords.y - bullets[j]->coords.y) * (player.coords.y - bullets[j]->coords.y) << "\t";
-								if (j != i && 
-									!bullet_strong[j] && 
-									(player.coords.x - bullets[j]->coords.x) * (player.coords.x - bullets[j]->coords.x) +
-									(player.coords.y - bullets[j]->coords.y) * (player.coords.y - bullets[j]->coords.y) < 800 || Game::instance->time - bullet_reverse < 0.5) {
-									bullet_strong[j] = true;
-									found = true;
-									std::cout << "STRONG\n";
-									break;
-								} 
-							}
-							std::cout << "\n";
-							if (!found) {
+							if (Game::instance->time - bullet_reverse < .2) {
+								bullet_strong[i] = true;
 								bullet_fired[i] = true;
-								bullet_strong[i] = false;
 								bullets[i]->coords = player.coords + Vector2(0, 4);
 								Game::instance->synth.playSample("data/sfx/shoot.wav", 0.6, false);
 								if (player.direction == player.RIGHT) bullets[i]->velocity = { bullet_vel, 0 };
 								else bullets[i]->velocity = { -bullet_vel, 0 };
+							}
+							else {
+								for (int j = 0; j < N_BULLETS; j++) {
+									if (j != i &&
+										!bullet_strong[j] &&
+										(player.coords.x - bullets[j]->coords.x) * (player.coords.x - bullets[j]->coords.x) +
+										(player.coords.y - bullets[j]->coords.y) * (player.coords.y - bullets[j]->coords.y) < 800) {
+										bullet_strong[j] = true;
+										found = true;
+										std::cout << "STRONG\n";
+										break;
+									}
+								}
+								std::cout << "\n";
+								if (!found) {
+									bullet_fired[i] = true;
+									bullet_strong[i] = false;
+									bullets[i]->coords = player.coords + Vector2(0, 4);
+									Game::instance->synth.playSample("data/sfx/shoot.wav", 0.6, false);
+									if (player.direction == player.RIGHT) bullets[i]->velocity = { bullet_vel, 0 };
+									else bullets[i]->velocity = { -bullet_vel, 0 };
+								}
 							}
 							break;
 						}
@@ -513,7 +521,6 @@ void gameStage_0::update(double seconds_elapsed)
 			}
 
 
-
 		}
 		else {
 			if (player.teleporting) {
@@ -531,6 +538,11 @@ void gameStage_0::update(double seconds_elapsed)
 						bullets[i]->coords = { -1, -1 };
 						bullet_fired[i] = false;
 					}
+				}
+			}
+			else if (reverting) {
+				if (Input::isKeyPressed(SDL_SCANCODE_N)) {
+					bullet_fired_while_reverse = true;
 				}
 			}
 		}
