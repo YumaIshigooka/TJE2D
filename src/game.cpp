@@ -52,6 +52,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	keyset.loadTGA("data/keys_tileset.tga");
 	select_arrows.loadTGA("data/select_arrows.tga");
 	simple_box.loadTGA("data/stick.tga");
+	box_tileset.loadTGA("data/box_tileset.tga");
 	explosion.loadTGA("data/player_explosion.tga");
 	grounding.loadTGA("data/grounding.tga");
 	opening_keys.loadTGA("data/opening_keys.tga");

@@ -6,12 +6,14 @@ hitBox::hitBox(Vector2* t_r, Vector2* b_l) {
 	this->t_r = *t_r;
 	this->b_l = *b_l;
 	this->type = NONE;
+	this->father = nullptr;
 }
 
 hitBox::hitBox(Vector2* t_r, Vector2* b_l, type_HB type) {
 	this->t_r = *t_r;
 	this->b_l = *b_l;
 	this->type = type;
+	this->father = nullptr;
 }
 
 hitBox::hitBox() {}

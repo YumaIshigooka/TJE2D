@@ -3,17 +3,22 @@
 
 #include "includes.h"
 #include "utils.h"
+class sEntity;
 
 class hitBox {
 public:
 	Vector2 t_r; // top right
 	Vector2 b_l; // bottom left
+
+
 	enum type_HB {
 		NONE = -1,
-		KEY_0
+		KEY_0,
+		BOX_WOOD,
+		BOX_METAL
 	};
 	type_HB type;
-	enum {
+	enum coltype{
 		NO_HIT,
 		UP_HIT,
 		DOWN_HIT,
@@ -21,6 +26,9 @@ public:
 		RIGHT_HIT,
 		INSIDE
 	};
+
+	sEntity *father;
+
 	hitBox(Vector2* t_r, Vector2* b_l);
 	hitBox(Vector2* t_r, Vector2* b_l, type_HB type);
 	hitBox() ;

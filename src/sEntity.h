@@ -13,6 +13,7 @@ public:
 	Vector2 dv;
 	Vector2 velocity;
 	bool active;
+	double break_time;
 	enum {
 		RIGHT,
 		LEFT,

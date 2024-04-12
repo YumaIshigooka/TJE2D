@@ -40,7 +40,7 @@ public:
 	Image explosion, grounding;
 	Image tileset;
 	Image keyset, select_arrows;
-	Image simple_box, opening_keys, clock_sprite;
+	Image simple_box, opening_keys, clock_sprite, box_tileset;
 
 	Image tutorial_help1, tutorial_help2, tutorial_help3, tutorial_help4;
 
