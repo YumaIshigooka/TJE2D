@@ -371,7 +371,7 @@ void gameStage_0::update(double seconds_elapsed)
 							}
 							else {
 								for (int j = 0; j < N_BULLETS; j++) {
-									if (j != i &&
+									if (j != i && 
 										!bullet_strong[j] &&
 										(player.coords.x - bullets[j]->coords.x) * (player.coords.x - bullets[j]->coords.x) +
 										(player.coords.y - bullets[j]->coords.y) * (player.coords.y - bullets[j]->coords.y) < 800) {
