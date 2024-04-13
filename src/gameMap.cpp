@@ -92,15 +92,15 @@ void GameMap::drawTileset(GameMap* map, int cs, int numtiles, Image tileset, Ima
 }
 
 void GameMap::drawAsset(Image& fb, Image asset, Area area, Vector2& coords, Vector2 offset, Vector2 player_coords) {
-	if (coords.x - player_coords.x < fb.width && player_coords.x - coords.x < fb.width + asset.width &&
-		coords.y - player_coords.y < fb.width && player_coords.y - coords.y < fb.height + asset.height) {
+	if (coords.x - player_coords.x < fb.width * 0.7 && player_coords.x - coords.x < fb.width * 0.7 + asset.width &&
+		coords.y - player_coords.y < fb.height * 0.7 && player_coords.y - coords.y < fb.height * 0.7 + asset.height) {
 		fb.drawImage(asset, coords.x + offset.x, coords.y + offset.y, area);
 	}
 }
 
 void GameMap::drawAsset(Image & fb, Image asset, Vector2& coords, Vector2 offset, Vector2 player_coords) {
-	if (coords.x - player_coords.x < fb.width && player_coords.x - coords.x < fb.width + asset.width &&
-		coords.y - player_coords.y < fb.width && player_coords.y - coords.y < fb.height + asset.height) {
+	if (coords.x - player_coords.x < fb.width * 0.7 && player_coords.x - coords.x < fb.width * 0.7 + asset.width &&
+		coords.y - player_coords.y < fb.height * 0.7 && player_coords.y - coords.y < fb.height * 0.7 + asset.height) {
 		fb.drawImage(asset, coords.x + offset.x, coords.y + offset.y);
 	}
 }

@@ -42,6 +42,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	stage_map[Game::stages::STAGE0] = tutorial;
 
 	font.loadTGA("data/bitmap-font-white.tga");
+	font_b.loadTGA("data/bitmap-font-black.tga");
 	minifont.loadTGA("data/mini-font-white-4x6.tga");
 	minifont_b.loadTGA("data/mini-font-black-4x6.tga");
 	bigfont.loadTGA("data/big-font-white-14x18.tga");
@@ -60,11 +61,17 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	tutorial_help2.loadTGA("data/tutorial_help2.tga");
 	tutorial_help3.loadTGA("data/tutorial_help3.tga");
 	tutorial_help4.loadTGA("data/tutorial_help4.tga");
+	tutorial_help5.loadTGA("data/tutorial_help5.tga");
+	tutorial_help6.loadTGA("data/tutorial_help6.tga");
+	tutorial_help7.loadTGA("data/tutorial_help7.tga");
 	clock_sprite.loadTGA("data/clock.tga");
+	flag.loadTGA("data/flag.tga");
 
 	title_screen.loadTGA("data/title_screen.tga");
 	pause_screen.loadTGA("data/pause_screen.tga");
+	end_screen.loadTGA("data/end_screen.tga");
 	revert_overlay.loadTGA("data/bg.tga");
+
 
 
 	this->window_width = window_width;

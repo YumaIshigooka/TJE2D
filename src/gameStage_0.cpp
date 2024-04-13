@@ -2,6 +2,9 @@
 #include "math.h"
 #include <math.h>
 #include "game.h"
+#include "menuStage.h"
+
+gameStage_0* gameStage_0::instance = NULL;
 
 float Stage::gravity = 800;
 float Stage::jump = 120;
@@ -9,9 +12,11 @@ float Stage::x_vel = 60;
 float Stage::bullet_vel = 180;
 
 float runkey = false;
-
+float player_canjump = true;
 bool bullet_fired_while_reverse = false;
+bool reset = false;
 
+sEntity* flag;
 sEntity pillar;
 sEntity key_tobreak;
 sEntity* boxes;
@@ -59,6 +64,13 @@ void drawAllAssets(Image& fb, camBorders cb, Player player, double tuto2_timer, 
 	GameMap::drawAsset(fb, Game::instance->tutorial_help4, Vector2(112 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
 	GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 2) % 2), 0, 17, 17), Vector2(119 * 8, 16 * 8), cb.cam_offset, player.coords);
 
+	GameMap::drawAsset(fb, Game::instance->tutorial_help5, Vector2(150 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
+	GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 1.5) % 2), 17, 17, 17), Vector2(10 * 8 + 4, 21 * 8 - 3), cb.cam_offset, player.coords);
+
+	GameMap::drawAsset(fb, Game::instance->tutorial_help6, Vector2(212 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
+
+	GameMap::drawAsset(fb, Game::instance->tutorial_help7, Vector2(232 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
+
 	if (pillar.active) {
 		fb.drawImage(Game::instance->simple_box, pillar.coords.x + cb.cam_offset.x, pillar.coords.y + cb.cam_offset.y - 40, Area(0, 0, 13, 40));
 		fb.drawImage(Game::instance->opening_keys, pillar.coords.x + cb.cam_offset.x + 3, pillar.coords.y + cb.cam_offset.y - 22 + int(Game::instance->time * 2) % 2, Area(0, 0, 7, 4));
@@ -88,12 +100,18 @@ void drawAllAssets(Image& fb, camBorders cb, Player player, double tuto2_timer, 
 					Vector2(h->father->coords.x, h->father->coords.y),
 					cb.cam_offset, player.coords);
 			}
-			else if (Game::instance->time - h->father->break_time < 0/*.5*/) {
+			else if (Game::instance->time - h->father->break_time < 0.5) {
 				GameMap::drawAsset(fb, Game::instance->box_tileset,
 					Area(h->father->size.x * (int((Game::instance->time - h->father->break_time) * 14) % 7), 12 * (h->type == hitBox::BOX_METAL), h->father->size.x, h->father->size.y),
 					Vector2(h->father->coords.x, h->father->coords.y),
 					cb.cam_offset, player.coords);
 			}
+		}
+		else if (h->type == hitBox::END_GOAL) {
+			GameMap::drawAsset(fb, Game::instance->flag,
+				Area(h->father->size.x * (int(Game::instance->time * 7) % 7), 0, h->father->size.x, h->father->size.y),
+				Vector2(h->father->coords.x, h->father->coords.y),
+				cb.cam_offset, player.coords);
 		}
 		//GameMap::drawAsset(fb, Game::instance->box_tileset, Area(0, 0, 12, 12), Vector2(6 * 8, 28 * 8 - 12), cb.cam_offset, player.coords);
 	}
@@ -101,15 +119,13 @@ void drawAllAssets(Image& fb, camBorders cb, Player player, double tuto2_timer, 
 }
 
 void drawInterface(Image& fb, int idx_should, int idx_lowest, double last_fired, bool transitioning) {
-	fb.drawImage(Game::instance->clock_sprite, 7, 74, Area(transitioning * 9 * (int(Game::instance->time * 25) % 16) , 0, 9, 11));
+	fb.drawImage(Game::instance->clock_sprite, 3, 74, Area(transitioning * 9 * (int(Game::instance->time * 25) % 16) , 0, 9, 11));
 
-	fb.drawRectangle(9, 87, 5, 31, Color::GRAY);
-	fb.drawRectangle(10, 117 - 30 * (idx_should - idx_lowest) / 1000, 3, 30 * (idx_should - idx_lowest) / 1000, Color::CYAN);
-	fb.drawRectangle(2, 113, 5, 5, Color::GRAY);
-	fb.drawRectangle(3, 114, 3, 6 * Game::instance->norm(0.5, Game::instance->time - last_fired), Color::RED);
+	fb.drawRectangle(5, 87, 5, 31, Color::GRAY);
+	fb.drawRectangle(6, 117 - 30 * (idx_should - idx_lowest) / 1000, 3, 30 * (idx_should - idx_lowest) / 1000, Color::CYAN);
 	if (idx_should - idx_lowest == 999) {
-		fb.drawText("FULL", 5, 68, Game::instance->minifont_b, 4, 6);
-		fb.drawText("FULL", 4, 67, Game::instance->minifont, 4, 6);
+		fb.drawText("FULL", 2, 68, Game::instance->minifont_b, 4, 6);
+		fb.drawText("FULL", 1, 67, Game::instance->minifont, 4, 6);
 	}
 }
 
@@ -122,10 +138,15 @@ void addBox(Vector2 coords, Vector2 size, hitBox::type_HB type, std::vector<hitB
 }
 
 gameStage_0::gameStage_0() {
+	instance = this;
+
 	ground_hitboxes = new std::vector<hitBox*>;
 	platform_hitboxes = new std::vector<hitBox*>;
 	obstacle_hitboxes = new std::vector<hitBox*>;
 	other_hitboxes = new std::vector<hitBox*>;
+
+	jump_sample = new Synth::SamplePlayback();
+	fps = 0;
 
 	addHitbox(ground_hitboxes, 15*8,	28*8,	0*8,	30*8, &ground);
 	addHitbox(ground_hitboxes, 26*8,	27*8,	14*8,	30*8, &ground);
@@ -134,7 +155,6 @@ gameStage_0::gameStage_0() {
 	addHitbox(ground_hitboxes, 106*8,	29*8,	86*8,	30*8, &ground);
 	addHitbox(ground_hitboxes, 105*8,	23*8,	104*8,	26*8, &ground);
 	addHitbox(ground_hitboxes, 141*8,	24*8,	129*8,	27*8, &ground);
-	addHitbox(ground_hitboxes, 215 * 8, 21 * 8, 210 * 8, 24 * 8, &ground);
 
 	addHitbox(platform_hitboxes, 25 * 8,	24 * 8,		16 * 8,		25 * 8);
 	addHitbox(platform_hitboxes, 32 * 8,	22 * 8,		26 * 8,		23 * 8);
@@ -146,18 +166,17 @@ gameStage_0::gameStage_0() {
 	addHitbox(platform_hitboxes, 186 * 8,	23 * 8,		174 * 8,	24 * 8);
 	addHitbox(platform_hitboxes, 198 * 8,	24 * 8,		188 * 8,	25 * 8);
 	addHitbox(platform_hitboxes, 209 * 8,	25 * 8,		200 * 8,	26 * 8);
-	addHitbox(platform_hitboxes, 246 * 8,	27 * 8,		219 * 8,	28 * 8);
+	addHitbox(platform_hitboxes, 260 * 8,	26 * 8,		211 * 8,	27 * 8);
 
 	addHitbox(obstacle_hitboxes, 52 * 8,	29 * 8 - 3,		26 * 8,		30 * 8);
 	addHitbox(obstacle_hitboxes, 300 * 8,	29 * 8 - 3,		101 * 8, 	30 * 8);
 	addHitbox(obstacle_hitboxes, 186 * 8 - 4,	22 * 8 + 3,		183 * 8 + 2, 	23 * 8);
 	addHitbox(obstacle_hitboxes, 198 * 8 - 4,	23 * 8 + 4,		196 * 8 + 2, 	24 * 8);
 	addHitbox(obstacle_hitboxes, 209 * 8 - 4,	24 * 8 + 4,		208 * 8 + 2, 	25 * 8);
-	addHitbox(obstacle_hitboxes, 221 * 8 - 6,	26 * 8 + 4,		219 * 8 + 2, 	27 * 8);
 
-	pillar.coords = { 129 * 8, 24 * 8 };
-	pillar.hitbox->t_r = { 129 * 8 + 13, 19 * 8 };
-	pillar.hitbox->b_l = { 129 * 8, 24 * 8 };
+	pillar.coords = { 129 * 8 - 1, 24 * 8 };
+	pillar.hitbox->t_r = { 129 * 8 + 13, 18 * 8 };
+	pillar.hitbox->b_l = { 129 * 8 - 1, 27 * 8 };
 	pillar.hitbox->father = &pillar;
 	ground_hitboxes->push_back(pillar.hitbox);
 
@@ -165,14 +184,33 @@ gameStage_0::gameStage_0() {
 	key_tobreak.hitbox->type = hitBox::KEY_0; key_tobreak.hitbox->father = &key_tobreak; key_tobreak.size = { 7, 4 }; key_tobreak.velocity = { 0,0 };
 	other_hitboxes->push_back(key_tobreak.hitbox);
 
-	addBox(Vector2(12 * 8, 23 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
+	flag = new sEntity();
+	flag->coords = { 257 * 8, 26 * 8 - 18 };  flag->size = { 17, 18 }; 
+	flag->hitbox->t_r = { flag->coords.x + flag->size.x, flag->coords.y}; flag->hitbox->b_l = { flag->coords.x, flag->coords.y + flag->size.y };
+	flag->hitbox->type = hitBox::END_GOAL; flag->hitbox->father = flag; flag->velocity = { 0,0 };
+	other_hitboxes->push_back(flag->hitbox);
+
+	addBox(Vector2(191 * 8, 22 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
 	addBox(Vector2(174 * 8 - 2, 23 * 8 - 12), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
-	addBox(Vector2(12 * 8, 26 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
-	addBox(Vector2(12 * 8, 20 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(200 * 8, 23 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(200 * 8 + 1, 21 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(200 * 8 - 2, 19 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(220 * 8, 24 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(231 * 8, 24 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(231 * 8 - 2, 22 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(241 * 8 - 2, 24 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(242 * 8 - 2, 22 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(243 * 8 - 1, 24 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(248 * 8 - 1, 24 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(253 * 8 - 2, 24 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(253 * 8 - 4, 22 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(253 * 8 - 5, 20 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(253 * 8 - 7, 18 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(253 * 8 - 8, 16 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
 
 
 
-
+	player.coords = { 10 * 8, 20 * 8 };
 	player.size = { 8, 8 };
 	player.hitbox->b_l = { player.coords.x + player.size.x / 3, player.coords.y + player.size.y };
 	player.hitbox->t_r = { player.coords.x + player.size.x * 2 / 3, player.coords.y + player.size.y * 5 / 6 };
@@ -200,6 +238,34 @@ void gameStage_0::onEnter() {
 	idx_lowest = 1;
 	reverting = false;
 
+	player.coords = { 10 * 8, 20 * 8 };
+	player.size = { 8, 8 };
+	player.hitbox->b_l = { player.coords.x + player.size.x / 3, player.coords.y + player.size.y };
+	player.hitbox->t_r = { player.coords.x + player.size.x * 2 / 3, player.coords.y + player.size.y * 5 / 6 };
+	player.teleporting = false;
+	player.teleportdistance = 0;
+	player.velocity = { 0,0 };
+
+	cb.cam_should = { 160 / 2 - player.size.x / 2, 120 / 2 - player.size.y / 2 };
+	cb.cam_should -= player.coords;
+	cb.cam_offset = cb.cam_should;
+	cb.player_cam = { 0,0 };
+
+	for (int i = 0; i < N_BULLETS; i++)
+	{
+		bullet_fired[i] = false;
+		bullet_strong[i] = false;
+	}
+
+	sueloStatus = hitBox::NO_HIT;
+
+	// Timers
+	coyote = -5;
+	running = -5;
+	last_fired = -5;
+	tuto2_timer = -5;
+	status_change_time = -5;
+
 	transitioning = false;
 	transition_start = Game::instance->time;
 	tr_in = true;
@@ -207,6 +273,17 @@ void gameStage_0::onEnter() {
 
 void gameStage_0::onLeave() {
 	if (paused) paused = !paused;
+
+
+
+
+	for (int i = 0; i < N_BULLETS; i++)
+	{
+		bullets[i] = new sEntity();
+		bullets[i]->coords = { -float(i) * 1000, -float(i) * 1000 };
+	}
+
+	checkpoint = { 80, 216 };
 }
 
 
@@ -219,6 +296,7 @@ void gameStage_0::render(Image& fb) {
 	Vector2 player_print_coords = { fb.width / 2 - player.size.x / 2 + cb.player_cam.x , fb.height / 2 - player.size.y / 2 + cb.player_cam.y };
 
 	GameMap::drawTileset(map, cs, numtiles, Game::instance->tileset, fb, cb.cam_offset, Game::instance->time);
+	drawAllAssets(fb, cb, player, tuto2_timer, other_hitboxes);
 
 	if (!player.teleporting) {
 		fb.drawImage(Game::instance->sprite_mini,
@@ -228,6 +306,9 @@ void gameStage_0::render(Image& fb) {
 				player.direction * player.size.y,
 				player.size.x,
 				player.size.y));	//draws only a part of an image
+		fb.drawLine(player_print_coords.x, player_print_coords.y + 11, player_print_coords.x - 1 + 11, player_print_coords.y + 11, Color(0,0,0,120));
+		fb.drawLine(player_print_coords.x - 1, player_print_coords.y + 10, player_print_coords.x - 1 + 10 * clamp(Game::instance->time - last_fired, 0, 0.4) / 0.4, player_print_coords.y + 10,Color::RED);
+		
 	}
 	else if (Game::instance->time - player.last_death < 0.87) {
 		fb.drawImage(Game::instance->explosion,
@@ -258,9 +339,6 @@ void gameStage_0::render(Image& fb) {
 				32));	//draws only a part of an image
 	}
 
-
-	drawAllAssets(fb, cb, player, tuto2_timer, other_hitboxes);
-
 	int bulletidx = 0;
 	for (int i = 0; i < N_BULLETS; i++) {
 		int screenx = bullets[i]->coords.x + cb.cam_offset.x;
@@ -269,9 +347,27 @@ void gameStage_0::render(Image& fb) {
 		else fb.drawLine(screenx, screeny, screenx - 3*Game::instance->sign(bullets[i]->velocity.x), screeny, Color::RED);
 	}
 
+	drawInterface(fb, idx_should, idx_lowest, last_fired, transitioning);
+
+
+
 	fb.drawText("FPS: " + toString(int(fps)), 125, 1, Game::instance->minifont, 4, 6);
 	fb.drawText("Fired: " + toString(bullet_fired[0]) + toString(bullet_fired[1]) + toString(bullet_fired[2]) + toString(bullet_fired[3]) + toString(bullet_fired[4]), 4, 1, Game::instance->minifont, 4, 6);
 	fb.drawText("Strong: " + toString(bullet_strong[0]) + toString(bullet_strong[1]) + toString(bullet_strong[2]) + toString(bullet_strong[3]) + toString(bullet_strong[4]), 4, 8, Game::instance->minifont, 4, 6);
+	
+	fb.drawText("PLAYERHITBOX: " + toString(int(player.hitbox->t_r.x)) + ":" + toString(int(player.hitbox->t_r.y))
+		+ " | " + toString(int(player.hitbox->b_l.x)) + ":" + toString(int(player.hitbox->b_l .y)), 4, 20, Game::instance->minifont, 4, 6);
+	fb.drawText("FLAG: " + toString(int(flag->hitbox->t_r.x)) + ":" + toString(int(flag->hitbox->t_r.y))
+		+ " | " + toString(int(flag->hitbox->b_l.x)) + ":" + toString(int(flag->hitbox->b_l.y)), 4, 27, Game::instance->minifont, 4, 6);
+	fb.drawText("TOUCHING: " + toString(flag->collided(&player)) + " " + toString(player.collided(flag)) + " " + toString(flag->hitbox->collided_status(player.hitbox)),
+		4, 34, Game::instance->minifont, 4, 6);
+	fb.drawText(toString(player.hitbox->t_r.x > flag->hitbox->b_l.x &&
+		flag->hitbox->t_r.x > player.hitbox->b_l.x), 4, 41, Game::instance->minifont, 4, 6);
+
+	//toString((player.hitbox->t_r.x > flag->hitbox->b_l.x &&
+	//	flag->hitbox->t_r.x > player.hitbox->b_l.x &&
+	//	player.hitbox->t_r.y < flag->hitbox->b_l.y &&
+	//	flag->hitbox->t_r.y < player.hitbox->b_l.y)
 
 	fb.drawText(toString(Game::instance->time - bullet_reverse) + " " + toString(bullet_fired_while_reverse), 4, 15, Game::instance->minifont, 4, 6);
 
@@ -280,7 +376,7 @@ void gameStage_0::render(Image& fb) {
 		fb.drawText(toString((float)(idx_should - idx_lowest) / fps), 30, 51, Game::instance->bigfont, 14, 18);
 	} 
 
-	drawInterface(fb, idx_should, idx_lowest, last_fired, transitioning);
+	
 
 	if (paused) {
 		reverting = false;
@@ -303,8 +399,11 @@ void gameStage_0::render(Image& fb) {
 
 void gameStage_0::update(double seconds_elapsed)
 {
-	for (hitBox* h : *ground_hitboxes) std::cout << h->father->active;
-	std::cout << "\n";
+	totaltime += seconds_elapsed;
+	std::cout << player.hitbox->collided(flag->hitbox);
+	for (hitBox* h : *other_hitboxes) {
+		if (h->type == hitBox::END_GOAL) std::cout << player.hitbox->collided(h) << "\n";
+	}
 	// std::cout << player.hitbox.collided(ground_hitboxes[0]);
 	if (paused && !transitioning) {
 		if (Input::wasKeyPressed(SDL_SCANCODE_UP)) {
@@ -325,8 +424,9 @@ void gameStage_0::update(double seconds_elapsed)
 		}
 	}
 	else if (!transitioning) {
-		if (player.coords.x > 100 * 8) checkpoint = Vector2(106 * 8, 24 * 8);
-
+		if (player.coords.x > 212 * 8) checkpoint = Vector2(212 * 8, 25 * 8);
+		else if (player.coords.x > 106 * 8) checkpoint = Vector2(106 * 8, 25 * 8);
+		
 		skip = (skip + 1) % 3;
 
 		if (skip && !reverting) {
@@ -374,7 +474,7 @@ void gameStage_0::update(double seconds_elapsed)
 		player.dv.y = 1;
 		if (!reverting && !player.teleporting) {
 			//Read the keyboard state, to see all the keycodes: https://wiki.libsdl.org/SDL_Keycode
-			if (Input::wasKeyPressed(SDL_SCANCODE_UP)) {
+			if (Input::wasKeyPressed(SDL_SCANCODE_UP) && player_canjump) {
 				if ((Game::instance->time - coyote) < 0.15) {
 					coyote = -5;
 					player.velocity.y = -jump;
@@ -383,7 +483,7 @@ void gameStage_0::update(double seconds_elapsed)
 					jump_sample = Game::instance->synth.playSample("data/sfx/jump.wav", 0.6, false);
 				}
 			}
-			if (Input::isKeyPressed(SDL_SCANCODE_UP)) {
+			if (Input::isKeyPressed(SDL_SCANCODE_UP) && player_canjump) {
 				if (Game::instance->time - player.last_jumptime < 0.2) {
 					player.velocity.y -= gravity * seconds_elapsed;
 				}
@@ -517,7 +617,7 @@ void gameStage_0::update(double seconds_elapsed)
 			}
 
 			int hit_type = hitBox::NO_HIT;
-
+			bool touchingCeiling = false;
 			// Handling Collisions
 			if (player.grounded || player.velocity.y > 0) { // If touching ground or falling
 				for (hitBox* h : *ground_hitboxes) {
@@ -541,8 +641,10 @@ void gameStage_0::update(double seconds_elapsed)
 						// If hitting below a hitbox
 						if ((h->type == hitBox::BOX_METAL || h->type == hitBox::BOX_WOOD) &&
 							player.hitbox->collided_status_up(h) == hitBox::UP_HIT && player.velocity.y < 0) {
-							player.velocity.y = 0;
+							player.velocity.y = -0;
 							player.last_jumptime = -10;
+							touchingCeiling = true;
+							player_canjump = false;
 						}
 						// If hitting sides of a Ground hitbox
 						else if (player.hitbox->collided_status_sides(h) == hitBox::RIGHT_HIT || player.hitbox->collided_status_sides(h) == hitBox::LEFT_HIT) {
@@ -576,11 +678,14 @@ void gameStage_0::update(double seconds_elapsed)
 				}
 			}
 
-			if (player.hitbox->touching(&currentground)) {
+			if (player.hitbox->touching(&currentground) && !touchingCeiling) {
 				player.grounded = true;
 				coyote = Game::instance->time;
 			}
 			else {
+				if (!touchingCeiling) player_canjump = true;
+				else { cb.player_cam.y += 1;  player.coords.y += 1; }
+
 				player.grounded = false;
 				currentground.b_l = { -1,-1 };
 				currentground.t_r = { -1,-1 };
@@ -628,6 +733,9 @@ void gameStage_0::update(double seconds_elapsed)
 				}
 			}
 
+			if (player.hitbox->collided(flag->hitbox)) {
+				transitioning = true; transition_start = Game::instance->time; tr_in = false; gotoStage = Game::stages::MENU; menuStage::instance->win = true;
+			}
 		}
 		else {
 			if (player.teleporting) {
@@ -698,15 +806,12 @@ void gameStage_0::onKeyUp(SDL_KeyboardEvent event)
 	if (event.keysym.sym == SDLK_DOWN ||
 		event.keysym.sym == SDLK_RIGHT ||
 		event.keysym.sym == SDLK_LEFT) player.moving = 0;
-	if (event.keysym.sym == SDLK_a) {
-		player.moving = 0;
-		coyote = Game::instance->time;
-	}
 	if (event.keysym.sym == SDLK_UP) {
 		player.moving = 0;
 		jump_sample->stop();
 	}
 	if (event.keysym.sym == SDLK_m) {
+		player.moving = 0;
 		idx_lowest = idx_should;
 	}
 }

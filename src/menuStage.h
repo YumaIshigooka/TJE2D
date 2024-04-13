@@ -16,8 +16,8 @@
 
 class menuStage : public Stage {
 public:
-
-
+	static menuStage* instance;
+	bool win;
 	// Constructor
 	menuStage();
 
