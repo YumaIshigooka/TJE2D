@@ -28,6 +28,7 @@ public:
 	};
 
 	sEntity *father;
+	hitBox* current_ground;
 
 	hitBox(Vector2* t_r, Vector2* b_l);
 	hitBox(Vector2* t_r, Vector2* b_l, type_HB type);
@@ -35,6 +36,7 @@ public:
 
 	int collided_status(hitBox* hb2);
 	int collided_status_sides(hitBox* hb2);
+	int collided_status_up(hitBox* hb2);
 	bool collided(hitBox* hb2);
 	bool touching(hitBox* hb2);
 	void copy(hitBox* h2);

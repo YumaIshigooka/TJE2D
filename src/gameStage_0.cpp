@@ -129,7 +129,7 @@ gameStage_0::gameStage_0() {
 	addHitbox(platform_hitboxes, 105 * 8,	23 * 8,		95 * 8,		24 * 8);
 	addHitbox(platform_hitboxes, 124 * 8,	26 * 8,		105 * 8,	27 * 8);
 	addHitbox(platform_hitboxes, 172 * 8,	27 * 8,		146 * 8,	28 * 8);
-	addHitbox(platform_hitboxes, 186 * 8,	23 * 8,		173 * 8,	24 * 8);
+	addHitbox(platform_hitboxes, 186 * 8,	23 * 8,		174 * 8,	24 * 8);
 	addHitbox(platform_hitboxes, 198 * 8,	24 * 8,		188 * 8,	25 * 8);
 	addHitbox(platform_hitboxes, 209 * 8,	25 * 8,		200 * 8,	26 * 8);
 	addHitbox(platform_hitboxes, 246 * 8,	27 * 8,		219 * 8,	28 * 8);
@@ -151,7 +151,11 @@ gameStage_0::gameStage_0() {
 	key_tobreak.hitbox->type = hitBox::KEY_0; key_tobreak.hitbox->father = &key_tobreak; key_tobreak.size = { 7, 4 };
 	other_hitboxes->push_back(key_tobreak.hitbox);
 
-	box1.coords = { 6 * 8, 28 * 8 - 12 }; box1.hitbox->t_r = { 6 * 8 + 12, 28 * 8 - 12 }; box1.hitbox->b_l = { 6 * 8, 28 * 8};
+	//box1.coords = { 174 * 8 - 2, 23 * 8 - 12 }; box1.hitbox->t_r = { 174 * 8 + 10, 23 * 8 - 24}; box1.hitbox->b_l = { 174 * 8 - 2, 23 * 8};
+	//box1.hitbox->type = hitBox::BOX_WOOD; box1.hitbox->father = &box1; box1.size = { 12,12 };
+	//other_hitboxes->push_back(box1.hitbox); ground_hitboxes->push_back(box1.hitbox);
+
+	box1.coords = { 6 * 8, 24 * 8 }; box1.hitbox->t_r = { 6 * 8 + 12, 24 * 8 }; box1.hitbox->b_l = { 6 * 8, 24 * 8 + 12};
 	box1.hitbox->type = hitBox::BOX_WOOD; box1.hitbox->father = &box1; box1.size = { 12,12 };
 	other_hitboxes->push_back(box1.hitbox); ground_hitboxes->push_back(box1.hitbox);
 
@@ -517,13 +521,19 @@ void gameStage_0::update(double seconds_elapsed)
 			}
 			else {
 				for (hitBox* h : *ground_hitboxes) {
-					if (player.hitbox->collided_status_sides(h) == hitBox::RIGHT_HIT || player.hitbox->collided_status_sides(h) == hitBox::LEFT_HIT) {
+					if ((h->type == hitBox::BOX_METAL || h->type == hitBox::BOX_WOOD) &&
+						player.hitbox->collided_status_up(h) == hitBox::UP_HIT && player.velocity.y < 0) {
+						player.velocity.y = 0;
+						player.last_jumptime = -10;
+					}
+					else if (player.hitbox->collided_status_sides(h) == hitBox::RIGHT_HIT || player.hitbox->collided_status_sides(h) == hitBox::LEFT_HIT) {
 						hit_type = hitBox::LEFT_HIT;
 					}
 					else if (!player.grounded && player.hitbox->collided_status_sides(h) == hitBox::DOWN_HIT) {
 						currentground = *h;
 						break;
 					}
+
 				}
 			}
 

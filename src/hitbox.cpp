@@ -7,6 +7,7 @@ hitBox::hitBox(Vector2* t_r, Vector2* b_l) {
 	this->b_l = *b_l;
 	this->type = NONE;
 	this->father = nullptr;
+	this->current_ground = nullptr;
 }
 
 hitBox::hitBox(Vector2* t_r, Vector2* b_l, type_HB type) {
@@ -14,6 +15,7 @@ hitBox::hitBox(Vector2* t_r, Vector2* b_l, type_HB type) {
 	this->b_l = *b_l;
 	this->type = type;
 	this->father = nullptr;
+	this->current_ground = nullptr;
 }
 
 hitBox::hitBox() {}
@@ -35,6 +37,16 @@ int hitBox::collided_status_sides(hitBox* hb2) {
 		else if (this->b_l.x < hb2->b_l.x) return RIGHT_HIT;
 		else if (this->t_r.y < hb2->t_r.y) return DOWN_HIT;
 		else return UP_HIT; // this->b_l.y > hb2->b_l.y
+	}
+	return NO_HIT;
+}
+int hitBox::collided_status_up(hitBox* hb2) {
+	if (this->collided(hb2)) {
+		if (this->t_r.x + 0 < hb2->t_r.x && this->t_r.y - 0 > hb2->t_r.y && this->b_l.x - 0 > hb2->b_l.x && this->b_l.y + 0 < hb2->b_l.y) return INSIDE;
+		else if (this->t_r.y < hb2->t_r.y) return DOWN_HIT;
+		else if (this->b_l.y > hb2->b_l.y) return UP_HIT; // 
+		else if (this->t_r.x > hb2->t_r.x) return LEFT_HIT;
+		else  return RIGHT_HIT;
 	}
 	return NO_HIT;
 }
