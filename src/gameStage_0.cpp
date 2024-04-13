@@ -8,19 +8,26 @@ float Stage::jump = 120;
 float Stage::x_vel = 60;
 float Stage::bullet_vel = 180;
 
+float runkey = false;
+
 bool bullet_fired_while_reverse = false;
 
 sEntity pillar;
 sEntity key_tobreak;
-sEntity box1;
-sEntity box2;
+sEntity* boxes;
+
 sEntity metalbox1;
+
+sEntity ground;
+
+Game::stages gotoStage;
 
 double box_break_time;
 double bullet_reverse = -10;
 
-void addHitbox(std::vector<hitBox*> *l, float tr_x, float tr_y, float bl_x, float bl_y) {
+void addHitbox(std::vector<hitBox*> *l, float tr_x, float tr_y, float bl_x, float bl_y, sEntity* father = nullptr) {
 	hitBox* h = new hitBox(new Vector2(tr_x, tr_y), new Vector2(bl_x, bl_y));
+	h->father = father;
 	l->push_back(h);
 	return;
 }
@@ -72,19 +79,18 @@ void drawAllAssets(Image& fb, camBorders cb, Player player, double tuto2_timer, 
 					Area(0, 0, h->father->size.x, h->father->size.y),
 					Vector2(h->father->coords.x, h->father->coords.y),
 					cb.cam_offset, player.coords);
-				std::cout << h->father->size.x << " " << h->father->size.y;
 			}
 		}
-		else if (h->type == hitBox::BOX_WOOD) {
+		else if (h->type == hitBox::BOX_WOOD || h->type == hitBox::BOX_METAL) {
 			if (h->father->active) {
 				GameMap::drawAsset(fb, Game::instance->box_tileset,
-					Area(0, 0, h->father->size.x, h->father->size.y),
+					Area(0, 12 * (h->type == hitBox::BOX_METAL), h->father->size.x, h->father->size.y),
 					Vector2(h->father->coords.x, h->father->coords.y),
 					cb.cam_offset, player.coords);
 			}
-			else if (Game::instance->time - h->father->break_time < 0.5) {
+			else if (Game::instance->time - h->father->break_time < 0/*.5*/) {
 				GameMap::drawAsset(fb, Game::instance->box_tileset,
-					Area(h->father->size.x * (int((Game::instance->time - h->father->break_time) * 14) % 7), 0, h->father->size.x, h->father->size.y),
+					Area(h->father->size.x * (int((Game::instance->time - h->father->break_time) * 14) % 7), 12 * (h->type == hitBox::BOX_METAL), h->father->size.x, h->father->size.y),
 					Vector2(h->father->coords.x, h->father->coords.y),
 					cb.cam_offset, player.coords);
 			}
@@ -107,20 +113,28 @@ void drawInterface(Image& fb, int idx_should, int idx_lowest, double last_fired,
 	}
 }
 
+void addBox(Vector2 coords, Vector2 size, hitBox::type_HB type, std::vector<hitBox*>* l1, std::vector<hitBox*>* l2) {
+	sEntity* box = new sEntity();
+	box->coords = coords; box->original_coords = coords; 
+	box->hitbox->t_r = coords + Vector2(size.x, 0); box->hitbox->b_l = coords + Vector2(0, size.y);
+	box->hitbox->type = type; box->hitbox->father = box; box->size = size; box->velocity = { 0,0 };
+	l1->push_back(box->hitbox); l2->push_back(box->hitbox);
+}
+
 gameStage_0::gameStage_0() {
 	ground_hitboxes = new std::vector<hitBox*>;
 	platform_hitboxes = new std::vector<hitBox*>;
 	obstacle_hitboxes = new std::vector<hitBox*>;
 	other_hitboxes = new std::vector<hitBox*>;
 
-	addHitbox(ground_hitboxes, 15*8,	28*8,	0*8,	30*8);
-	addHitbox(ground_hitboxes, 26*8,	27*8,	14*8,	30*8);
-	addHitbox(ground_hitboxes, 3*8,		0*8,	0*8,	26*8);
-	addHitbox(ground_hitboxes, 26*8,	26*8,	25*8,	27*8);
-	addHitbox(ground_hitboxes, 106*8,	29*8,	86*8,	30*8);
-	addHitbox(ground_hitboxes, 105*8,	23*8,	104*8,	26*8);
-	addHitbox(ground_hitboxes, 141*8,	24*8,	129*8,	27*8);
-	addHitbox(ground_hitboxes, 215 * 8, 21 * 8, 210 * 8, 24 * 8);
+	addHitbox(ground_hitboxes, 15*8,	28*8,	0*8,	30*8, &ground);
+	addHitbox(ground_hitboxes, 26*8,	27*8,	14*8,	30*8, &ground);
+	addHitbox(ground_hitboxes, 3*8,		0*8,	0*8,	26*8, &ground);
+	addHitbox(ground_hitboxes, 26*8,	26*8,	25*8,	27*8, &ground);
+	addHitbox(ground_hitboxes, 106*8,	29*8,	86*8,	30*8, &ground);
+	addHitbox(ground_hitboxes, 105*8,	23*8,	104*8,	26*8, &ground);
+	addHitbox(ground_hitboxes, 141*8,	24*8,	129*8,	27*8, &ground);
+	addHitbox(ground_hitboxes, 215 * 8, 21 * 8, 210 * 8, 24 * 8, &ground);
 
 	addHitbox(platform_hitboxes, 25 * 8,	24 * 8,		16 * 8,		25 * 8);
 	addHitbox(platform_hitboxes, 32 * 8,	22 * 8,		26 * 8,		23 * 8);
@@ -144,20 +158,18 @@ gameStage_0::gameStage_0() {
 	pillar.coords = { 129 * 8, 24 * 8 };
 	pillar.hitbox->t_r = { 129 * 8 + 13, 19 * 8 };
 	pillar.hitbox->b_l = { 129 * 8, 24 * 8 };
+	pillar.hitbox->father = &pillar;
 	ground_hitboxes->push_back(pillar.hitbox);
 
-
 	key_tobreak.coords = { 126 * 8, 27 * 8 }; key_tobreak.hitbox->t_r = { 127 * 8, 27 * 8 - 4 }; key_tobreak.hitbox->b_l = { 126 * 8, 28 * 8 };
-	key_tobreak.hitbox->type = hitBox::KEY_0; key_tobreak.hitbox->father = &key_tobreak; key_tobreak.size = { 7, 4 };
+	key_tobreak.hitbox->type = hitBox::KEY_0; key_tobreak.hitbox->father = &key_tobreak; key_tobreak.size = { 7, 4 }; key_tobreak.velocity = { 0,0 };
 	other_hitboxes->push_back(key_tobreak.hitbox);
 
-	//box1.coords = { 174 * 8 - 2, 23 * 8 - 12 }; box1.hitbox->t_r = { 174 * 8 + 10, 23 * 8 - 24}; box1.hitbox->b_l = { 174 * 8 - 2, 23 * 8};
-	//box1.hitbox->type = hitBox::BOX_WOOD; box1.hitbox->father = &box1; box1.size = { 12,12 };
-	//other_hitboxes->push_back(box1.hitbox); ground_hitboxes->push_back(box1.hitbox);
+	addBox(Vector2(12 * 8, 23 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(174 * 8 - 2, 23 * 8 - 12), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(12 * 8, 26 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(12 * 8, 20 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
 
-	box1.coords = { 6 * 8, 24 * 8 }; box1.hitbox->t_r = { 6 * 8 + 12, 24 * 8 }; box1.hitbox->b_l = { 6 * 8, 24 * 8 + 12};
-	box1.hitbox->type = hitBox::BOX_WOOD; box1.hitbox->father = &box1; box1.size = { 12,12 };
-	other_hitboxes->push_back(box1.hitbox); ground_hitboxes->push_back(box1.hitbox);
 
 
 
@@ -248,12 +260,13 @@ void gameStage_0::render(Image& fb) {
 
 
 	drawAllAssets(fb, cb, player, tuto2_timer, other_hitboxes);
+
 	int bulletidx = 0;
 	for (int i = 0; i < N_BULLETS; i++) {
 		int screenx = bullets[i]->coords.x + cb.cam_offset.x;
 		int screeny = bullets[i]->coords.y + cb.cam_offset.y;
-		if (bullet_strong[i]) fb.drawRectangle(screenx-1, screeny, 5, 3, Color::RANDOM());
-		else fb.drawLine(screenx, screeny, screenx + 3, screeny, Color::RED);
+		if (bullet_strong[i]) fb.drawRectangle(screenx + Game::instance->sign(bullets[i]->velocity.x), screeny - 1, 5, 3, Color::RANDOM());
+		else fb.drawLine(screenx, screeny, screenx - 3*Game::instance->sign(bullets[i]->velocity.x), screeny, Color::RED);
 	}
 
 	fb.drawText("FPS: " + toString(int(fps)), 125, 1, Game::instance->minifont, 4, 6);
@@ -278,7 +291,7 @@ void gameStage_0::render(Image& fb) {
 	if (transitioning) {
 		fb.drawRectangle(0, 0, fb.width,
 			(Game::instance->time - transition_start) * 3 * fb.height, Color::BLACK);
-		if ((Game::instance->time - transition_start) * 3 * fb.height > fb.height + 25) Game::instance->switch_stage(Game::stages::MENU);
+		if ((Game::instance->time - transition_start) * 3 * fb.height > fb.height + 25) Game::instance->switch_stage(gotoStage);
 
 	} else if (tr_in) {
 		fb.drawRectangle(0, (Game::instance->time - transition_start) * 3 * fb.width, fb.width,
@@ -290,6 +303,8 @@ void gameStage_0::render(Image& fb) {
 
 void gameStage_0::update(double seconds_elapsed)
 {
+	for (hitBox* h : *ground_hitboxes) std::cout << h->father->active;
+	std::cout << "\n";
 	// std::cout << player.hitbox.collided(ground_hitboxes[0]);
 	if (paused && !transitioning) {
 		if (Input::wasKeyPressed(SDL_SCANCODE_UP)) {
@@ -303,7 +318,7 @@ void gameStage_0::update(double seconds_elapsed)
 		else if ((Input::wasKeyPressed(SDL_SCANCODE_N))) {
 			switch (pause_option) {
 			case pauses::CONTINUE_GAME: paused = !paused; break;
-			case pauses::BACK_MENU:  transitioning = true; transition_start = Game::instance->time; tr_in = false;  break; // TO DO: go back to menu
+			case pauses::BACK_MENU:  transitioning = true; transition_start = Game::instance->time; tr_in = false; gotoStage = Game::stages::MENU; break; // TO DO: go back to menu
 			case pauses::QUIT_GAME:	Game::instance->must_exit = true; break;
 			}
 			Game::instance->synth.playSample("data/sfx/select.wav", 0.6, false);
@@ -327,7 +342,7 @@ void gameStage_0::update(double seconds_elapsed)
 			}
 		}
 
-		if (Input::isKeyPressed(SDL_SCANCODE_M) && idx_should > idx_lowest) //if key right
+		if (Input::isKeyPressed(SDL_SCANCODE_M) && idx_should - 1 > idx_lowest) //if key right
 		{
 			--idx;
 			if (idx == -1) idx = 999;
@@ -405,12 +420,12 @@ void gameStage_0::update(double seconds_elapsed)
 
 			if (Input::wasKeyPressed(SDL_SCANCODE_N) || bullet_fired_while_reverse) {
 				bullet_fired_while_reverse = false;
-				if (Game::instance->time - last_fired > 0.4) {
+				if (Game::instance->time - last_fired > 0.4) { // Shoot every .4 seconds
 					for (int i = 0; i < N_BULLETS; i++) {
-						if (!bullet_fired[i]) {
+						if (!bullet_fired[i]) { // Look for a bullet that has not been shot.
 							last_fired = Game::instance->time;
 							bool found = false;
-							if (Game::instance->time - bullet_reverse < .2) {
+							if (Game::instance->time - bullet_reverse < .2) { // "Coyote time" for the "mega" bullet.
 								bullet_strong[i] = true;
 								bullet_fired[i] = true;
 								bullets[i]->coords = player.coords + Vector2(0, 4);
@@ -419,7 +434,7 @@ void gameStage_0::update(double seconds_elapsed)
 								else bullets[i]->velocity = { -bullet_vel, 0 };
 							}
 							else {
-								for (int j = 0; j < N_BULLETS; j++) {
+								for (int j = 0; j < N_BULLETS; j++) { // Mega bullet. We do another bool to see if bullets are available.
 									if (j != i && 
 										!bullet_strong[j] &&
 										(player.coords.x - bullets[j]->coords.x) * (player.coords.x - bullets[j]->coords.x) +
@@ -430,8 +445,7 @@ void gameStage_0::update(double seconds_elapsed)
 										break;
 									}
 								}
-								std::cout << "\n";
-								if (!found) {
+								if (!found) { // Normal bullet if not found any normal bullet close.
 									bullet_fired[i] = true;
 									bullet_strong[i] = false;
 									bullets[i]->coords = player.coords + Vector2(0, 4);
@@ -445,30 +459,27 @@ void gameStage_0::update(double seconds_elapsed)
 					}
 				}
 			}
-
 			// Finish Reading Inputs
 
+			// Bullet Collisions
 			for (int i = 0; i < N_BULLETS; i++) {
 				if (bullet_fired[i]) {
 					bullets[i]->coords += bullets[i]->velocity * seconds_elapsed;
 					bullets[i]->hitbox->t_r = { bullets[i]->coords.x + 2, bullets[i]->coords.y };
 					bullets[i]->hitbox->b_l = { bullets[i]->coords.x, bullets[i]->coords.y + 2 };
 					for (hitBox* h : *ground_hitboxes) {
-						if (bullets[i]->hitbox->collided(h) || abs(bullets[i]->coords.x - player.coords.x) > fb_size[0]) {
+						if ((h->father->active && bullets[i]->hitbox->collided(h)) || abs(bullets[i]->coords.x - player.coords.x) > fb_size[0]) {
 							bullets[i]->coords = { -float(i)  * 10000, -float(i) * 10000};
 							bullet_fired[i] = false;
-							if (h->type == hitBox::BOX_WOOD) {
+							if (h->type == hitBox::BOX_WOOD || (h->type == hitBox::BOX_METAL && bullet_strong[i]) ) {
 								h->father->active = false;
 								h->father->break_time = Game::instance->time;
-								h->t_r = { -1, -1 }; h->b_l = { -1, -1 };
 							}
 							break;
 						}
 					}
 				}
 			}
-
-
 
 			// Compute new coords
 			Vector2 new_coords = player.coords;
@@ -507,33 +518,43 @@ void gameStage_0::update(double seconds_elapsed)
 
 			int hit_type = hitBox::NO_HIT;
 
-
-			if (player.grounded || player.velocity.y > 0) {
+			// Handling Collisions
+			if (player.grounded || player.velocity.y > 0) { // If touching ground or falling
 				for (hitBox* h : *ground_hitboxes) {
-					if (player.hitbox->collided_status(h) == hitBox::RIGHT_HIT || player.hitbox->collided_status(h) == hitBox::LEFT_HIT) {
-						hit_type = hitBox::LEFT_HIT;
+					if (h->father->active) {
+						// If Hitting Sides of a Ground Hitbox
+						if (player.hitbox->collided_status(h) == hitBox::RIGHT_HIT || player.hitbox->collided_status(h) == hitBox::LEFT_HIT) {
+							hit_type = hitBox::LEFT_HIT;
+						}
+						// If hitting ground
+						else if (!player.grounded && player.hitbox->collided_status(h) == hitBox::DOWN_HIT) {
+							currentground = *h;
+							break;
+						}
 					}
-					else if (!player.grounded && player.hitbox->collided_status(h) == hitBox::DOWN_HIT) {
-						currentground = *h;
-						break;
-					}
+
 				}
 			}
-			else {
+			else { // If jumping
 				for (hitBox* h : *ground_hitboxes) {
-					if ((h->type == hitBox::BOX_METAL || h->type == hitBox::BOX_WOOD) &&
-						player.hitbox->collided_status_up(h) == hitBox::UP_HIT && player.velocity.y < 0) {
-						player.velocity.y = 0;
-						player.last_jumptime = -10;
-					}
-					else if (player.hitbox->collided_status_sides(h) == hitBox::RIGHT_HIT || player.hitbox->collided_status_sides(h) == hitBox::LEFT_HIT) {
-						hit_type = hitBox::LEFT_HIT;
-					}
-					else if (!player.grounded && player.hitbox->collided_status_sides(h) == hitBox::DOWN_HIT) {
-						currentground = *h;
-						break;
-					}
+					if (h->father->active) {
+						// If hitting below a hitbox
+						if ((h->type == hitBox::BOX_METAL || h->type == hitBox::BOX_WOOD) &&
+							player.hitbox->collided_status_up(h) == hitBox::UP_HIT && player.velocity.y < 0) {
+							player.velocity.y = 0;
+							player.last_jumptime = -10;
+						}
+						// If hitting sides of a Ground hitbox
+						else if (player.hitbox->collided_status_sides(h) == hitBox::RIGHT_HIT || player.hitbox->collided_status_sides(h) == hitBox::LEFT_HIT) {
+							hit_type = hitBox::LEFT_HIT;
 
+						}
+						//// If hitting 
+						//else if (!player.grounded && player.hitbox->collided_status_sides(h) == hitBox::DOWN_HIT) {
+						//	currentground = *h;
+						//	break;
+						//}
+					}
 				}
 			}
 
@@ -543,10 +564,6 @@ void gameStage_0::update(double seconds_elapsed)
 					break;
 				}
 			}
-
-
-
-
 
 			if (!currentground.collided(player.hitbox) || player.velocity.y < 0) {
 				if (hit_type == hitBox::LEFT_HIT) {
@@ -559,7 +576,6 @@ void gameStage_0::update(double seconds_elapsed)
 				}
 			}
 
-
 			if (player.hitbox->touching(&currentground)) {
 				player.grounded = true;
 				coyote = Game::instance->time;
@@ -570,17 +586,47 @@ void gameStage_0::update(double seconds_elapsed)
 				currentground.t_r = { -1,-1 };
 			}
 
-
-
-			for (hitBox* h : *obstacle_hitboxes) {
-				if (player.hitbox->touching(h) || (Input::wasKeyPressed(SDL_SCANCODE_S) && !player.teleporting)) {
-					player.teleport(Vector2(checkpoint.x, checkpoint.y), seconds_elapsed, cb, Game::instance->time, synth);
-					player.last_death = Game::instance->time;
-					Game::instance->synth.playSample("data/sfx/rip.wav", 0.6, false);
+			bool chof = false;
+			for (hitBox* h : *other_hitboxes) {
+				if (h->type == hitBox::BOX_METAL || h->type == hitBox::BOX_WOOD) {
+					bool grounded = false;
+					for (hitBox* g : *ground_hitboxes) {
+						if (h != g && g->father->active && h->collided_status(g) == hitBox::DOWN_HIT) {
+							grounded = true;
+							break;
+						}
+					}
+					if (!grounded) {
+						for (hitBox* g : *platform_hitboxes) {
+							if (h->collided(g)) {
+								grounded = true;
+								break;
+							}
+						}
+					}
+					if (!grounded) {
+						h->father->velocity.y += clamp(0.4 * gravity * seconds_elapsed, -1, 150);
+						float y_move = h->father->velocity.y * seconds_elapsed;;
+						h->father->coords.y += y_move;
+						h->t_r.y += y_move; h->b_l.y += y_move;
+						if (player.hitbox->collided_status_up(h) == hitBox::UP_HIT || player.hitbox->collided_status_up(h) == hitBox::INSIDE) {
+							chof = true;
+						}
+					}
+					else {
+						h->father->velocity.y = 0;
+					}
 				}
 			}
 
-
+			for (hitBox* h : *obstacle_hitboxes) {
+				if (player.hitbox->touching(h) || (Input::wasKeyPressed(SDL_SCANCODE_S) && !player.teleporting) || chof) {
+					player.teleport(Vector2(checkpoint.x, checkpoint.y), seconds_elapsed, cb, Game::instance->time, synth);
+					player.last_death = Game::instance->time;
+					Game::instance->synth.playSample("data/sfx/rip.wav", 0.6, false);
+					break;
+				}
+			}
 
 		}
 		else {
@@ -595,6 +641,16 @@ void gameStage_0::update(double seconds_elapsed)
 						pillar.active = true;
 						pillar.hitbox->t_r.y -= 39;
 					}
+					for (hitBox* h : *other_hitboxes) {
+						h->father->active = true;
+						if (h->type == hitBox::BOX_METAL || h->type == hitBox::BOX_WOOD) {
+							h->father->coords = h->father->original_coords;
+							h->t_r = { h->father->coords.x + h->father->size.x, h->father->coords.y };
+							h->b_l = { h->father->coords.x, h->father->coords.y + h->father->size.y };
+							h->father->velocity.y = 0;
+						}
+						
+					}
 					for (int i = 0; i < N_BULLETS; i++) {
 						bullets[i]->coords = { -1, -1 };
 						bullet_fired[i] = false;
@@ -603,7 +659,7 @@ void gameStage_0::update(double seconds_elapsed)
 			}
 			else if (reverting) {
 				if (Input::isKeyPressed(SDL_SCANCODE_N)) {
-					bullet_fired_while_reverse = true;
+					bullet_fired_while_reverse = true; // Store if the key of shooting has been pressed while reverting, used for the strong shot
 				}
 			}
 		}

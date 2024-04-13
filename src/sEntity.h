@@ -10,6 +10,7 @@ class sEntity {
 public:
 	Vector2 size = { 0.0f, 0.0f };
 	Vector2 coords;
+	Vector2 original_coords;
 	Vector2 dv;
 	Vector2 velocity;
 	bool active;

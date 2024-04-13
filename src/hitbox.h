@@ -15,7 +15,8 @@ public:
 		NONE = -1,
 		KEY_0,
 		BOX_WOOD,
-		BOX_METAL
+		BOX_METAL,
+		END_GOAL
 	};
 	type_HB type;
 	enum coltype{
