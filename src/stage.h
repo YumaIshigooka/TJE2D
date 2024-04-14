@@ -71,6 +71,7 @@ public:
 	static float x_vel;
 	static float bullet_vel;
 
+	Synth::SamplePlayback* bgmusic;
 	// Map
 	GameMap* map;
 	int stage_number;

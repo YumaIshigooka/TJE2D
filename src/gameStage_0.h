@@ -16,6 +16,7 @@
 
 class gameStage_0 : public Stage {
 public:
+	GameMap* clouds;
 	static gameStage_0* instance;
 	// Terrain Hitboxes
 	std::vector<hitBox*>* ground_hitboxes;
@@ -35,9 +36,11 @@ public:
 
 	// Player & Bullets
 	Player player;
+	bool player_canjump = true;
 	sEntity* bullets[N_BULLETS];
 	bool bullet_fired[N_BULLETS] = { false, false, false, false, false };
 	bool bullet_strong[N_BULLETS] = { false, false, false, false, false };
+	bool bullet_fired_while_reverse = false;
 
 	Vector2 checkpoint;
 	camBorders cb;
@@ -58,7 +61,7 @@ public:
 
 	// Pausing
 	bool paused = false;
-	enum pauses {
+	enum pauses : uint8 {
 		CONTINUE_GAME,
 		BACK_MENU,
 		QUIT_GAME
@@ -66,10 +69,22 @@ public:
 	int pause_option = pauses::CONTINUE_GAME;
 
 	// Audio
-	Synth synth;
 	Synth::SamplePlayback* jump_sample;
 
 
+
+
+	sEntity* flag;
+	sEntity pillar;
+	sEntity key_tobreak;
+	sEntity* boxes;
+
+	sEntity ground;
+
+	Game::stages gotoStage;
+
+	float box_break_time;
+	float bullet_reverse = -10;
 
 	int fb_size[2] = { 160, 120 };
 
@@ -98,8 +113,9 @@ public:
 
 private:
 	void addHitbox(std::vector<hitBox*>* l, float tr_x, float tr_y, float bl_x, float bl_y, sEntity* father = nullptr);
-	void drawAllAssets(Image& fb, camBorders cb, Player player, std::vector<hitBox*>* other_hitboxes);
-	void drawInterface(Image& fb, int idx_should, int idx_lowest, double last_fired, bool transitioning);
+	void drawAllAssets(Image& fb);
+	void drawPlayerandBullets(Image& fb);
+	void drawInterface(Image& fb);
 	void addBox(Vector2 coords, Vector2 size, hitBox::type_HB type, std::vector<hitBox*>* l1, std::vector<hitBox*>* l2);
 	void restart_map_assets();
 	void handle_shooting ();

@@ -18,6 +18,8 @@ class menuStage : public Stage {
 public:
 	static menuStage* instance;
 	bool win;
+	bool tosave;
+	float besttime;
 	// Constructor
 	menuStage();
 
@@ -29,6 +31,7 @@ public:
 	void onEnter();
 	void onLeave();
 
+
 	//events
 	void onKeyDown(SDL_KeyboardEvent event);
 	void onKeyUp(SDL_KeyboardEvent event);
@@ -38,6 +41,10 @@ public:
 	void onMouseWheel(SDL_MouseWheelEvent event);
 	void onGamepadButtonDown(SDL_JoyButtonEvent event);
 	void onGamepadButtonUp(SDL_JoyButtonEvent event);
+
+private:
+	void saveScore();
+	void loadScore();
 };
 
 #endif

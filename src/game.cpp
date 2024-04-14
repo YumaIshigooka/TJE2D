@@ -91,6 +91,7 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	current_stage = menu;
 
 	enableAudio(); //enable this line if you plan to add audio to your application
+	menu->onEnter();
 }
 
 void Game::switch_stage(Game::stages new_stage_id) {

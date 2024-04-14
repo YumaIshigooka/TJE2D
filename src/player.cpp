@@ -49,8 +49,6 @@ void Player::teleport(Vector2 new_coords, double elapsed_time, camBorders& cb, d
 		if (abs(this->coords.x - new_coords.x) + abs(this->coords.y - new_coords.y) < sqrt(this->teleportdistance) * 3) {
 			this->velocity -= this->velocity * sqrt(this->teleportdistance) * (0.3) * elapsed_time;
 		}
-		//this->velocity.x = new_coords.x - this->coords.x;
-		//this->velocity.y = new_coords.y - this->coords.y;
 		this->coords += this->velocity * elapsed_time;
 		cb.player_cam += this->velocity * elapsed_time;
 		if (abs(this->coords.x - new_coords.x) < 4 && abs(this->coords.y - new_coords.y) < 4) {

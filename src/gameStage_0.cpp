@@ -11,24 +11,7 @@ float Stage::jump = 120;
 float Stage::x_vel = 60;
 float Stage::bullet_vel = 180;
 
-float runkey = false;
-float player_canjump = true;
-bool bullet_fired_while_reverse = false;
-bool reset = false;
 
-sEntity* flag;
-sEntity pillar;
-sEntity key_tobreak;
-sEntity* boxes;
-
-sEntity metalbox1;
-
-sEntity ground;
-
-Game::stages gotoStage;
-
-float box_break_time;
-float bullet_reverse = -10;
 
 void gameStage_0::addHitbox(std::vector<hitBox*> *l, float tr_x, float tr_y, float bl_x, float bl_y, sEntity* father) {
 	hitBox* h = new hitBox(new Vector2(tr_x, tr_y), new Vector2(bl_x, bl_y));
@@ -37,7 +20,7 @@ void gameStage_0::addHitbox(std::vector<hitBox*> *l, float tr_x, float tr_y, flo
 	return;
 }
 
-void gameStage_0::drawAllAssets(Image& fb, camBorders cb, Player player, std::vector<hitBox*>* other_hitboxes) {
+void gameStage_0::drawAllAssets(Image& fb) {
 	GameMap::drawAsset(fb, Game::instance->tutorial_help1, Vector2(3 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
 	GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 1.5) % 2), 2 * 17, 17, 17), Vector2(10 * 8 + 4, 21 * 8 - 3), cb.cam_offset, player.coords);
 	GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 1.5 + 0.33) % 2), 4 * 17, 17, 17), Vector2(8 * 8 + 2, 19 * 8 - 5), cb.cam_offset, player.coords);
@@ -60,7 +43,6 @@ void gameStage_0::drawAllAssets(Image& fb, camBorders cb, Player player, std::ve
 	GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 3 * 17, 17, 17), Vector2(43 * 8 + 4, 21 * 8 - 3), cb.cam_offset, player.coords);
 	GameMap::drawAsset(fb, Game::instance->keyset, Area(0, 5 * 17, 17, 17), Vector2(45 * 8 + 6, 21 * 8 - 3), cb.cam_offset, player.coords);
 
-	GameMap::drawAsset(fb, Game::instance->tutorial_help3, Vector2(80 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
 	GameMap::drawAsset(fb, Game::instance->tutorial_help4, Vector2(112 * 8, 16 * 8 - 4), cb.cam_offset, player.coords);
 	GameMap::drawAsset(fb, Game::instance->keyset, Area(17 * (int(Game::instance->time * 2) % 2), 0, 17, 17), Vector2(119 * 8, 16 * 8), cb.cam_offset, player.coords);
 
@@ -115,7 +97,58 @@ void gameStage_0::drawAllAssets(Image& fb, camBorders cb, Player player, std::ve
 
 }
 
-void gameStage_0::drawInterface(Image& fb, int idx_should, int idx_lowest, double last_fired, bool transitioning) {
+void gameStage_0::drawPlayerandBullets(Image& fb) {
+	Vector2 player_print_coords = { fb.width / 2 - player.size.x / 2 + cb.player_cam.x , fb.height / 2 - player.size.y / 2 + cb.player_cam.y };
+	if (!player.teleporting) {
+		fb.drawImage(Game::instance->sprite_mini,
+			player_print_coords.x,
+			player_print_coords.y,
+			Area(player.moving * player.size.x * (int(Game::instance->time * 8) % 6),
+				player.direction * player.size.y,
+				player.size.x,
+				player.size.y));
+		fb.drawLine(player_print_coords.x, player_print_coords.y + 11, player_print_coords.x - 1 + 11, player_print_coords.y + 11, Color(0, 0, 0, 120));
+		fb.drawLine(player_print_coords.x - 1, player_print_coords.y + 10, player_print_coords.x - 1 + 10 * clamp(Game::instance->time - last_fired, 0, 0.4) / 0.4, player_print_coords.y + 10, Color::RED);
+
+	}
+	else if (Game::instance->time - player.last_death < 0.87) {
+		fb.drawImage(Game::instance->explosion,
+			player_print_coords.x - 12,
+			player_print_coords.y - 12,
+			Area(32 * ((int((Game::instance->time - player.last_death) * 8) % 8)),
+				7 * 32,
+				32,
+				32));
+	}
+	else {
+		Vector2 what = Vector2(player.velocity.x, player.velocity.y).normalize_unit(400) / 30;
+		fb.drawLine(player_print_coords.x + 4,
+			player_print_coords.y + 4,
+			player_print_coords.x - what.x + 4,
+			player_print_coords.y - what.y + 4,
+			Color::RANDOM());
+	}
+
+	if (Game::instance->time - player.last_ground < 0.5) {
+		fb.drawImage(Game::instance->grounding,
+			player.last_ground_pos.x - 12 + cb.cam_offset.x,
+			player.last_ground_pos.y - 12 + cb.cam_offset.y,
+			Area(32 * ((int((Game::instance->time - player.last_ground) * 8) % 4)),
+				0,
+				32,
+				32));
+	}
+
+	int bulletidx = 0;
+	for (int i = 0; i < N_BULLETS; i++) {
+		int screenx = bullets[i]->coords.x + cb.cam_offset.x;
+		int screeny = bullets[i]->coords.y + cb.cam_offset.y;
+		if (bullet_strong[i]) fb.drawRectangle(screenx + Game::instance->sign(bullets[i]->velocity.x), screeny - 1, 5, 3, Color::RANDOM());
+		else fb.drawLine(screenx, screeny, screenx - 3 * Game::instance->sign(bullets[i]->velocity.x), screeny, Color::RED);
+	}
+}
+
+void gameStage_0::drawInterface(Image& fb) {
 	fb.drawImage(Game::instance->clock_sprite, 3, 74, Area(!transitioning * 9 * (int(Game::instance->time * 25) % 16) , 0, 9, 11));
 
 	fb.drawRectangle(5, 87, 5, 31, Color::GRAY);
@@ -165,6 +198,7 @@ gameStage_0::gameStage_0() {
 	other_hitboxes = new std::vector<hitBox*>;
 
 	jump_sample = new Synth::SamplePlayback();
+	bgmusic = new Synth::SamplePlayback();
 	fps = 0;
 
 	addHitbox(ground_hitboxes, 15*8,	28*8,	0*8,	30*8, &ground);
@@ -174,6 +208,8 @@ gameStage_0::gameStage_0() {
 	addHitbox(ground_hitboxes, 106*8,	29*8,	86*8,	30*8, &ground);
 	addHitbox(ground_hitboxes, 105*8,	23*8,	104*8,	26*8, &ground);
 	addHitbox(ground_hitboxes, 141*8,	24*8,	129*8,	27*8, &ground);
+	addHitbox(ground_hitboxes, 87*8 - 1,28*8,	86*8,	29*8, &ground);
+	addHitbox(ground_hitboxes, 101*8,	28*8,	100*8+1,29*8, &ground);
 
 	addHitbox(platform_hitboxes, 25 * 8,	24 * 8,		16 * 8,		25 * 8);
 	addHitbox(platform_hitboxes, 32 * 8,	22 * 8,		26 * 8,		23 * 8);
@@ -187,7 +223,7 @@ gameStage_0::gameStage_0() {
 	addHitbox(platform_hitboxes, 209 * 8,	25 * 8,		200 * 8,	26 * 8);
 	addHitbox(platform_hitboxes, 260 * 8,	26 * 8,		211 * 8,	27 * 8);
 
-	addHitbox(obstacle_hitboxes, 52 * 8,	29 * 8 - 3,		26 * 8,		30 * 8);
+	addHitbox(obstacle_hitboxes, 86 * 8,	29 * 8 - 3,		26 * 8,		30 * 8);
 	addHitbox(obstacle_hitboxes, 300 * 8,	29 * 8 - 3,		101 * 8, 	30 * 8);
 	addHitbox(obstacle_hitboxes, 186 * 8 - 4,	22 * 8 + 3,		183 * 8 + 2, 	23 * 8);
 	addHitbox(obstacle_hitboxes, 198 * 8 - 4,	23 * 8 + 4,		196 * 8 + 2, 	24 * 8);
@@ -226,6 +262,13 @@ gameStage_0::gameStage_0() {
 	addBox(Vector2(253 * 8 - 5, 20 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
 	addBox(Vector2(253 * 8 - 7, 18 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
 	addBox(Vector2(253 * 8 - 8, 16 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(53 * 8, 24 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(55 * 8, 24 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(54 * 8, 22 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(67 * 8, 24 * 8), Vector2(12, 12), hitBox::BOX_METAL, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(67 * 8 + 2, 22 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(69 * 8 + 1, 26 * 8 - 12), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
+	addBox(Vector2(139 * 8 + 2, 22 * 8), Vector2(12, 12), hitBox::BOX_WOOD, other_hitboxes, ground_hitboxes);
 
 	player.coords = { 10 * 8, 20 * 8 };
 	player.size = { 8, 8 };
@@ -233,6 +276,7 @@ gameStage_0::gameStage_0() {
 	player.hitbox->t_r = { player.coords.x + player.size.x * 2 / 3, player.coords.y + player.size.y * 5 / 6 };
 	
 	map = GameMap::loadGameMap("data/tutorial.json");
+	clouds = GameMap::loadGameMap("data/clouds.json");
 
 	cb.cam_should = { 160 / 2 - player.size.x / 2, 120 / 2 - player.size.y / 2 };
 	cb.cam_should -= player.coords;
@@ -303,6 +347,10 @@ void gameStage_0::handle_bullets(double seconds_elapsed){
 					if (h->type == hitBox::BOX_WOOD || (h->type == hitBox::BOX_METAL && bullet_strong[i])) {
 						h->father->active = false;
 						h->father->break_time = Game::instance->time;
+						Game::instance->synth.playSample("data/sfx/box_explosion.wav", 0.6, false);
+					}
+					else if (h->type == hitBox::BOX_METAL) {
+						Game::instance->synth.playSample("data/sfx/metalbox.wav", 0.6, false);
 					}
 					break;
 	}	}	}	}
@@ -342,6 +390,8 @@ void gameStage_0::onEnter() {
 	transition_start = Game::instance->time;
 	tr_in = true;
 
+	bgmusic = Game::instance->synth.playSample("data/sfx/gamebgm.wav", 1, true);
+
 	// Map assets
 	restart_map_assets();
 }
@@ -354,7 +404,7 @@ void gameStage_0::onLeave() {
 		bullets[i] = new sEntity();
 		bullets[i]->coords = { -float(i) * 1000, -float(i) * 1000 };
 	}
-
+	bgmusic->stop();
 	checkpoint = { 80, 216 };
 }
 
@@ -363,81 +413,43 @@ void gameStage_0::render(Image& fb) {
 	// FrameBuffer
 	int cs = 8;
 	int numtiles = 18;
-	Vector2 player_print_coords = { fb.width / 2 - player.size.x / 2 + cb.player_cam.x , fb.height / 2 - player.size.y / 2 + cb.player_cam.y };
-
+	
+	Vector2 offset = Vector2(cb.cam_offset.x / 10, cb.cam_offset.y);
+	GameMap::drawTileset(clouds, cs, numtiles, Game::instance->tileset, fb, offset, Game::instance->time);
 	GameMap::drawTileset(map, cs, numtiles, Game::instance->tileset, fb, cb.cam_offset, Game::instance->time);
-	drawAllAssets(fb, cb, player, other_hitboxes);
 
-	if (!player.teleporting) {
-		fb.drawImage(Game::instance->sprite_mini,
-			player_print_coords.x,
-			player_print_coords.y,
-			Area(player.moving * player.size.x * (int(Game::instance->time * 8) % 6),
-				player.direction * player.size.y,
-				player.size.x,
-				player.size.y));	
-		fb.drawLine(player_print_coords.x, player_print_coords.y + 11, player_print_coords.x - 1 + 11, player_print_coords.y + 11, Color(0,0,0,120));
-		fb.drawLine(player_print_coords.x - 1, player_print_coords.y + 10, player_print_coords.x - 1 + 10 * clamp(Game::instance->time - last_fired, 0, 0.4) / 0.4, player_print_coords.y + 10,Color::RED);
-		
-	}
-	else if (Game::instance->time - player.last_death < 0.87) {
-		fb.drawImage(Game::instance->explosion,
-			player_print_coords.x - 12,
-			player_print_coords.y - 12,
-			Area(32 * ((int((Game::instance->time - player.last_death) * 8) % 8)),
-				7 * 32,
-				32,
-				32));	
-	}
-	else {
-		Vector2 what = Vector2(player.velocity.x, player.velocity.y).normalize_unit(400) / 30;
-		std::cout << what.x << " " << what.y << "\n";
-		fb.drawLine(player_print_coords.x + 4,
-			player_print_coords.y + 4,
-			player_print_coords.x - what.x + 4,
-			player_print_coords.y - what.y + 4,
-			Color::RANDOM());
-	}
+	drawAllAssets(fb);
 
-	if (Game::instance->time - player.last_ground < 0.5) {
-		fb.drawImage(Game::instance->grounding,
-			player.last_ground_pos.x - 12 + cb.cam_offset.x,
-			player.last_ground_pos.y - 12 + cb.cam_offset.y,
-			Area(32 * ((int((Game::instance->time - player.last_ground) * 8) % 4)),
-				0,
-				32,
-				32));	
-	}
+	drawPlayerandBullets(fb);
 
-	int bulletidx = 0;
-	for (int i = 0; i < N_BULLETS; i++) {
-		int screenx = bullets[i]->coords.x + cb.cam_offset.x;
-		int screeny = bullets[i]->coords.y + cb.cam_offset.y;
-		if (bullet_strong[i]) fb.drawRectangle(screenx + Game::instance->sign(bullets[i]->velocity.x), screeny - 1, 5, 3, Color::RANDOM());
-		else fb.drawLine(screenx, screeny, screenx - 3*Game::instance->sign(bullets[i]->velocity.x), screeny, Color::RED);
-	}
-
-	drawInterface(fb, idx_should, idx_lowest, last_fired, transitioning);
+	drawInterface(fb);
 
 
 
-	fb.drawText("FPS: " + toString(int(fps)), 125, 1, Game::instance->minifont, 4, 6);
+	// fb.drawText("FPS: " + toString(int(fps)), 125, 1, Game::instance->minifont, 4, 6);
+	fb.drawText(toString(floorf(totaltime * 100) / 100), 3, 3, Game::instance->minifont_b, 4,6);
+	fb.drawText(toString(floorf(totaltime * 100) / 100), 2, 2, Game::instance->minifont,4,6);
+	// fb.drawText(toString(Game::instance->time - bullet_reverse) + " " + toString(bullet_fired_while_reverse), 4, 15, Game::instance->minifont, 4, 6);
 
-	fb.drawText(toString(Game::instance->time - bullet_reverse) + " " + toString(bullet_fired_while_reverse), 4, 15, Game::instance->minifont, 4, 6);
-
+	// Reverting
 	if (reverting) {
-		fb.drawImage(Game::instance->revert_overlay, 0, 0);
+		fb.drawRectangle(0, 0, 160, 120, Color(163, 163, 163, 120));
+		for (int i = 0; i < 10; i++) {
+			Vector2i position = { rand() % 160, rand() % 120 };
+			fb.drawLine(position.x, position.y, position.x + rand() % 8 + 4, position.y, Color::BLACK);
+		}
 		fb.drawText(toString((float)(idx_should - idx_lowest) / fps), 30, 51, Game::instance->bigfont, 14, 18);
 	} 
 
-	
-
+	// Paused
 	if (paused) {
 		reverting = false;
 		idx_lowest = idx_should;
 		fb.drawImage(Game::instance->pause_screen, 0, 0);
 		fb.drawImage(Game::instance->select_arrows, 22, 20 + 31 * pause_option, Area(17 * (int(Game::instance->time * 3 / 2) % 2), pause_option * 17, 17, 17));
 	}
+
+	// Transition
 	if (transitioning) {
 		fb.drawRectangle(0, 0, fb.width,
 			(Game::instance->time - transition_start) * 3 * fb.height, Color::BLACK);
@@ -454,12 +466,8 @@ void gameStage_0::render(Image& fb) {
 void gameStage_0::update(double seconds_elapsed)
 {
 	// compute total playtime and frames per second
-	totaltime += seconds_elapsed;
+	
 	fps = 1 / seconds_elapsed;
-	for (hitBox* h : *other_hitboxes) {
-		if (h->type == hitBox::END_GOAL) std::cout << player.hitbox->collided(h) << "\n";
-	}
-	// std::cout << player.hitbox.collided(ground_hitboxes[0]);
 	if (paused && !transitioning) {
 		if (Input::wasKeyPressed(SDL_SCANCODE_UP)) {
 			if (--pause_option < pauses::CONTINUE_GAME) pause_option = pauses::QUIT_GAME;
@@ -479,6 +487,7 @@ void gameStage_0::update(double seconds_elapsed)
 		}
 	}
 	else if (!transitioning) {
+		totaltime += seconds_elapsed;
 		if (player.coords.x > 212 * 8) checkpoint = Vector2(212 * 8, 25 * 8);		// checkpoint 1
 		else if (player.coords.x > 106 * 8) checkpoint = Vector2(106 * 8, 25 * 8);	// checkpoint 2
 		
@@ -728,7 +737,7 @@ void gameStage_0::update(double seconds_elapsed)
 			// Check if the player should die. If chof is true, or we are touching any obstacle, perform the death animation.
 			for (hitBox* h : *obstacle_hitboxes) {
 				if (player.hitbox->touching(h) || (Input::wasKeyPressed(SDL_SCANCODE_S) && !player.teleporting) || chof) {
-					player.teleport(Vector2(checkpoint.x, checkpoint.y), seconds_elapsed, cb, Game::instance->time, synth);
+					player.teleport(Vector2(checkpoint.x, checkpoint.y), seconds_elapsed, cb, Game::instance->time, Game::instance->synth);
 					player.last_death = Game::instance->time;
 					Game::instance->synth.playSample("data/sfx/rip.wav", 0.6, false);
 					break;
@@ -737,16 +746,18 @@ void gameStage_0::update(double seconds_elapsed)
 
 			// If the player hits the flag, win the game.
 			if (player.hitbox->collided(flag->hitbox)) {
+				Game::instance->synth.playSample("data/sfx/flagreached.wav", 0.6, false);
 				transitioning = true; transition_start = Game::instance->time; tr_in = false; gotoStage = Game::stages::MENU; menuStage::instance->win = true;
 			}
 		}
 		else {
+			totaltime += seconds_elapsed;
 			if (player.teleporting) {
 				idx_lowest = idx_should;
 				if ((Game::instance->time - player.last_death) > .9) {
-					player.teleport(Vector2(checkpoint.x, checkpoint.y), seconds_elapsed, cb, Game::instance->time, synth);
+					player.teleport(Vector2(checkpoint.x, checkpoint.y), seconds_elapsed, cb, Game::instance->time, Game::instance->synth);
 				}
-				restart_map_assets();
+				if (!player.teleporting) restart_map_assets();
 			}
 			else if (reverting) {
 				if (Input::isKeyPressed(SDL_SCANCODE_Z)) {
