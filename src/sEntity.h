@@ -15,13 +15,13 @@ public:
 	Vector2 velocity;
 	bool active;
 	double break_time;
-	enum {
+	enum posible_dirs : uint8 {
 		RIGHT,
 		LEFT,
 		DOWN,
 		UP
 	};
-	int direction;
+	posible_dirs direction;
 	bool moving;
 	bool grounded;
 	hitBox* hitbox;

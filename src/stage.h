@@ -19,11 +19,11 @@ struct sGameInfo {
 	sEntity bullets[N_BULLETS];
 	bool bullet_fired[N_BULLETS];
 
-	enum saveState : uint8 {
+	enum saveState : int8 {
 		DEFAULT_NO_SAVESTATE_CHANGE = -1, SAVESTATE_SAVED, SAVESTATE_LOADED
 	};
 
-	static void saveGameInfo(Player& player, float time, saveState& save_state, bool& show, double& status_change_time)
+	static void saveGameInfo(Player& player, float time, saveState& save_state, bool& show, float& status_change_time)
 	{
 		sGameInfo game_info;
 		game_info.player = player;
@@ -36,7 +36,7 @@ struct sGameInfo {
 		fclose(fp);
 	}
 
-	static void loadGameInfo(Player& player, float time, saveState& save_state, bool& show, double& status_change_time)
+	static void loadGameInfo(Player& player, float time, saveState& save_state, bool& show, float& status_change_time)
 	{
 		sGameInfo game_info;
 

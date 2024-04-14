@@ -27,11 +27,11 @@ public:
 	int sueloStatus = hitBox::NO_HIT;
 
 	// Timers
-	double coyote = -5;
-	double running = -5;
-	double last_fired = -5;
-	double tuto2_timer = -5;
-	double status_change_time = -5;
+	float coyote = -5;
+	float running = -5;
+	float last_fired = -5;
+	float tuto2_timer = -5;
+	float status_change_time = -5;
 
 	// Player & Bullets
 	Player player;
@@ -49,12 +49,12 @@ public:
 	int idx_should = 0;
 	int idx_lowest = 1;
 	bool reverting = false;
-	double totaltime = 0;
+	float totaltime = 0;
 	float fps;
 
 	// Saving & Loading
-	sGameInfo::saveState save_state;
-	bool show;
+	//sGameInfo::saveState save_state;
+	//bool show;
 
 	// Pausing
 	bool paused = false;
@@ -94,6 +94,19 @@ public:
 	void onMouseWheel(SDL_MouseWheelEvent event);
 	void onGamepadButtonDown(SDL_JoyButtonEvent event);
 	void onGamepadButtonUp(SDL_JoyButtonEvent event);
+
+
+private:
+	void addHitbox(std::vector<hitBox*>* l, float tr_x, float tr_y, float bl_x, float bl_y, sEntity* father = nullptr);
+	void drawAllAssets(Image& fb, camBorders cb, Player player, std::vector<hitBox*>* other_hitboxes);
+	void drawInterface(Image& fb, int idx_should, int idx_lowest, double last_fired, bool transitioning);
+	void addBox(Vector2 coords, Vector2 size, hitBox::type_HB type, std::vector<hitBox*>* l1, std::vector<hitBox*>* l2);
+	void restart_map_assets();
+	void handle_shooting ();
+	void handle_bullets (double seconds_elapsed);
+	void compute_player_hitBox();
+
+
 };
 
 #endif

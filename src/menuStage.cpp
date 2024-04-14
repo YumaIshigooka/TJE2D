@@ -59,7 +59,7 @@ void menuStage::render(Image& fb) {
 
 void menuStage::update(double seconds_elapsed)
 {
-	if (Input::wasKeyPressed(SDL_SCANCODE_N)) {
+	if (Input::wasKeyPressed(SDL_SCANCODE_Z)) {
 
 		if (!tr_in && !transitioning) {
 			if (win) {

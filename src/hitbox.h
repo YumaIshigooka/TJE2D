@@ -11,7 +11,7 @@ public:
 	Vector2 b_l; // bottom left
 
 
-	enum type_HB {
+	enum type_HB : int8{
 		NONE = -1,
 		KEY_0,
 		BOX_WOOD,
@@ -19,7 +19,7 @@ public:
 		END_GOAL
 	};
 	type_HB type;
-	enum coltype{
+	enum coltype: uint8{
 		NO_HIT,
 		UP_HIT,
 		DOWN_HIT,
