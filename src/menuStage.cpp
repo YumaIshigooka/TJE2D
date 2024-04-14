@@ -8,7 +8,7 @@ menuStage* menuStage::instance = NULL;
 
 void menuStage::saveScore()
 {
-	if (besttime > gameStage_0::instance->totaltime) {
+	if (besttime > gameStage_0::instance->totaltime || besttime <= 0) {
 		besttime = gameStage_0::instance->totaltime;
 		FILE* fp = fopen("best_time.bin", "wb");
 		fwrite(&besttime, sizeof(float), 1, fp);
@@ -20,7 +20,7 @@ void menuStage::loadScore()
 {
 	FILE* fp = fopen("best_time.bin", "rb");
 	if (fp == NULL) {
-		besttime = 70.123;
+		besttime = -1;
 		return;
 	} 
 	fread(&besttime, sizeof(float), 1, fp);
@@ -64,6 +64,7 @@ void menuStage::render(Image& fb) {
 	if (win) {
 		fb.drawRectangle(0, 0, 160, 120, Color(105, 132, 132, 120));
 		fb.drawImage(Game::instance->end_screen, 24, 20);
+		fb.drawText("Press Z to go back to the menu", 20, 55, Game::instance->minifont_b, 4, 6);
 		fb.drawText(toString(gameStage_0::instance->totaltime), 71, 90, Game::instance->font_b);
 		fb.drawText(toString(gameStage_0::instance->totaltime), 70, 89, Game::instance->font);
 
@@ -73,8 +74,11 @@ void menuStage::render(Image& fb) {
 		fb.drawImage(Game::instance->title_screen, 0, 0);
 		fb.drawImage(Game::instance->keyset, 88, 69, Area(17 * (int(Game::instance->time * 3 / 2) % 2), 17, 17, 17));
 	}
-	fb.drawText("Your best time: " + toString(besttime), 37, 110, Game::instance->minifont_b, 4, 6);
-	fb.drawText("Your best time: " + toString(besttime), 36, 109, Game::instance->minifont, 4, 6);
+	if (besttime > 0 ) {
+		fb.drawText("Your best time: " + toString(besttime), 37, 110, Game::instance->minifont_b, 4, 6);
+		fb.drawText("Your best time: " + toString(besttime), 36, 109, Game::instance->minifont, 4, 6);
+	}
+
 
 	// Transition
 	if (transitioning) {

@@ -201,6 +201,9 @@ gameStage_0::gameStage_0() {
 	bgmusic = new Synth::SamplePlayback();
 	fps = 0;
 
+	addHitbox(ground_hitboxes, 0,	0,	-8,	30*8, &ground);
+
+
 	addHitbox(ground_hitboxes, 15*8,	28*8,	0*8,	30*8, &ground);
 	addHitbox(ground_hitboxes, 26*8,	27*8,	14*8,	30*8, &ground);
 	addHitbox(ground_hitboxes, 3*8,		0*8,	0*8,	26*8, &ground);
@@ -465,8 +468,12 @@ void gameStage_0::render(Image& fb) {
 
 void gameStage_0::update(double seconds_elapsed)
 {
+	// security check (if a lagspike happens the player could clip through the ground)
+	if (player.coords.y > 35*8) {
+		player.coords.y -= 20*8;
+		cb.player_cam.y -= 20*8;
+	}
 	// compute total playtime and frames per second
-	
 	fps = 1 / seconds_elapsed;
 	if (paused && !transitioning) {
 		if (Input::wasKeyPressed(SDL_SCANCODE_UP)) {
@@ -614,6 +621,7 @@ void gameStage_0::update(double seconds_elapsed)
 			player.hitbox->t_r = { new_coords.x + player.size.x * 3 / 4, new_coords.y + player.size.y * 1 / 8 - 1 };
 
 			if (player.hitbox->touching(key_tobreak.hitbox) && key_tobreak.active) {
+				jump_sample = Game::instance->synth.playSample("data/sfx/pickupkey.wav", 0.6, false);
 				key_tobreak.active = false;
 				pillar.active = false;
 				box_break_time = Game::instance->time;
