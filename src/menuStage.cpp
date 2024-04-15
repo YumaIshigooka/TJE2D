@@ -9,11 +9,14 @@ menuStage* menuStage::instance = NULL;
 void menuStage::saveScore()
 {
 	if (besttime > gameStage_0::instance->totaltime || besttime <= 0) {
+		newbest = true;
 		besttime = gameStage_0::instance->totaltime;
 		FILE* fp = fopen("best_time.bin", "wb");
 		fwrite(&besttime, sizeof(float), 1, fp);
 		fclose(fp);
+		return;
 	}
+	newbest = false;
 }
 
 void menuStage::loadScore()
@@ -33,12 +36,12 @@ menuStage::menuStage() {
 	map = GameMap::loadGameMap("data/bgmap.json");
 	win = false;
 	tosave = false;
+	newbest = false;
 	instance = this;
 }
 
 
 void menuStage::onEnter() {
-	loadScore();
 	transitioning = false;
 	transition_start = Game::instance->time;
 	tr_in = true;
@@ -75,8 +78,11 @@ void menuStage::render(Image& fb) {
 		fb.drawImage(Game::instance->keyset, 88, 69, Area(17 * (int(Game::instance->time * 3 / 2) % 2), 17, 17, 17));
 	}
 	if (besttime > 0 ) {
-		fb.drawText("Your best time: " + toString(besttime), 37, 110, Game::instance->minifont_b, 4, 6);
-		fb.drawText("Your best time: " + toString(besttime), 36, 109, Game::instance->minifont, 4, 6);
+		std::string msg;
+		if (newbest) msg = "NEW BEST! ";
+		else msg = "Your best time: ";
+		fb.drawText(msg + toString(besttime), 37 + newbest * 12, 110, Game::instance->minifont_b, 4, 6);
+		fb.drawText(msg + toString(besttime), 36 + newbest * 12, 109, Game::instance->minifont, 4, 6);
 	}
 
 
@@ -109,7 +115,6 @@ void menuStage::update(double seconds_elapsed)
 			}
 			
 		}
-		std::cout << "Hello";
 	} 
 }
 

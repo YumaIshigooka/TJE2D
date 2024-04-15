@@ -19,6 +19,7 @@ public:
 	static menuStage* instance;
 	bool win;
 	bool tosave;
+	bool newbest;
 	float besttime;
 	// Constructor
 	menuStage();

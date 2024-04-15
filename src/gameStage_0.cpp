@@ -295,6 +295,15 @@ gameStage_0::gameStage_0() {
 	checkpoint = { 80, 216 };
 }
 
+void gameStage_0::shoot(int idx, bool mega) {
+	bullet_strong[idx] = mega;
+	bullet_fired[idx] = true;
+	bullets[idx]->coords = player.coords + Vector2(0, 4);
+	Game::instance->synth.playSample("data/sfx/bigshoot.wav", 0.6, false);
+	if (player.direction == player.RIGHT) bullets[idx]->velocity = { bullet_vel, 0 };
+	else bullets[idx]->velocity = { -bullet_vel, 0 };
+}
+
 void gameStage_0::handle_shooting() {
 	bullet_fired_while_reverse = false;
 	if (Game::instance->time - last_fired > 0.4) { // Shoot every .4 seconds
@@ -303,12 +312,7 @@ void gameStage_0::handle_shooting() {
 				last_fired = Game::instance->time;
 				bool found = false;
 				if (Game::instance->time - bullet_reverse < .2) { // "Coyote time" for the "mega" bullet.
-					bullet_strong[i] = true;
-					bullet_fired[i] = true;
-					bullets[i]->coords = player.coords + Vector2(0, 4);
-					Game::instance->synth.playSample("data/sfx/bigshoot.wav", 0.6, false);
-					if (player.direction == player.RIGHT) bullets[i]->velocity = { bullet_vel, 0 };
-					else bullets[i]->velocity = { -bullet_vel, 0 };
+					shoot(i, true);
 				}
 				else {
 					for (int j = 0; j < N_BULLETS; j++) { // Mega bullet. We do another bool to see if bullets are available.
@@ -323,12 +327,7 @@ void gameStage_0::handle_shooting() {
 						}
 					}
 					if (!found) { // Normal bullet if not found any normal bullet close.
-						bullet_fired[i] = true;
-						bullet_strong[i] = false;
-						bullets[i]->coords = player.coords + Vector2(0, 4);
-						Game::instance->synth.playSample("data/sfx/shoot.wav", 0.6, false);
-						if (player.direction == player.RIGHT) bullets[i]->velocity = { bullet_vel, 0 };
-						else bullets[i]->velocity = { -bullet_vel, 0 };
+						shoot(i, false);
 					}
 				}
 				break;
@@ -495,8 +494,9 @@ void gameStage_0::update(double seconds_elapsed)
 	}
 	else if (!transitioning) {
 		totaltime += seconds_elapsed;
-		if (player.coords.x > 212 * 8) checkpoint = Vector2(212 * 8, 25 * 8);		// checkpoint 1
-		else if (player.coords.x > 106 * 8) checkpoint = Vector2(106 * 8, 25 * 8);	// checkpoint 2
+		if (player.coords.x > 212 * 8) checkpoint = Vector2(212 * 8, 25 * 8);		// checkpoint 3
+		else if (player.coords.x > 147 * 8) checkpoint = Vector2(147 * 8, 26 * 8);		// checkpoint 2
+		else if (player.coords.x > 106 * 8) checkpoint = Vector2(106 * 8, 25 * 8);	// checkpoint 1
 		
 		skip = (skip + 1) % 3; // we only store 2 out of 3 frames.
 

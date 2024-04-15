@@ -115,6 +115,7 @@ private:
 	void addHitbox(std::vector<hitBox*>* l, float tr_x, float tr_y, float bl_x, float bl_y, sEntity* father = nullptr);
 	void drawAllAssets(Image& fb);
 	void drawPlayerandBullets(Image& fb);
+	void shoot(int idx, bool mega);
 	void drawInterface(Image& fb);
 	void addBox(Vector2 coords, Vector2 size, hitBox::type_HB type, std::vector<hitBox*>* l1, std::vector<hitBox*>* l2);
 	void restart_map_assets();
