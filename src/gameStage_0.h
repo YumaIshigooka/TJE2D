@@ -85,6 +85,7 @@ public:
 
 	float box_break_time;
 	float bullet_reverse = -10;
+	bool cheated;
 
 	int fb_size[2] = { 160, 120 };
 

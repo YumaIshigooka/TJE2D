@@ -13,6 +13,8 @@ float Stage::bullet_vel = 180;
 
 
 
+
+
 void gameStage_0::addHitbox(std::vector<hitBox*> *l, float tr_x, float tr_y, float bl_x, float bl_y, sEntity* father) {
 	hitBox* h = new hitBox(new Vector2(tr_x, tr_y), new Vector2(bl_x, bl_y));
 	h->father = father;
@@ -191,7 +193,7 @@ void gameStage_0::restart_map_assets() {
 
 gameStage_0::gameStage_0() {
 	instance = this;
-
+	cheated = false;
 	ground_hitboxes = new std::vector<hitBox*>;
 	platform_hitboxes = new std::vector<hitBox*>;
 	obstacle_hitboxes = new std::vector<hitBox*>;
@@ -365,6 +367,7 @@ void gameStage_0::onEnter() {
 	idx_should = 0;
 	idx_lowest = 1;
 	reverting = false;
+	cheated = false;
 
 	player.coords = { 10 * 8, 20 * 8 };
 	player.size = { 8, 8 };
@@ -431,6 +434,10 @@ void gameStage_0::render(Image& fb) {
 	// fb.drawText("FPS: " + toString(int(fps)), 125, 1, Game::instance->minifont, 4, 6);
 	fb.drawText(toString(floorf(totaltime * 100) / 100), 3, 3, Game::instance->minifont_b, 4,6);
 	fb.drawText(toString(floorf(totaltime * 100) / 100), 2, 2, Game::instance->minifont,4,6);
+	if (cheated) {
+		fb.drawLine(1, 1, 18 + 4*(totaltime > 10) + 4*(totaltime > 100), 8, Color::RED);
+		fb.drawLine(1, 8, 18 + 4*(totaltime > 10) + 4*(totaltime > 100), 1, Color::RED);
+	}
 	// fb.drawText(toString(Game::instance->time - bullet_reverse) + " " + toString(bullet_fired_while_reverse), 4, 15, Game::instance->minifont, 4, 6);
 
 	// Reverting
@@ -795,11 +802,43 @@ void gameStage_0::onKeyDown(SDL_KeyboardEvent event)
 {
 	switch (event.keysym.sym) {
 	case SDLK_ESCAPE:
-		if (!paused) paused = !paused;
+		if (!paused && !transitioning) paused = !paused;
 		pause_option = pauses::CONTINUE_GAME;
+		break;
+	case SDLK_9:
+		if (!paused && !transitioning && !player.teleporting) {
+			cb.player_cam += flag->coords - player.coords;
+			player.coords += flag->coords - player.coords;
+			cheated = true;
+		}
+		break;
+	case SDLK_1:
+		if (!paused && !transitioning && !player.teleporting) {
+			cb.player_cam += Vector2(106 * 8, 25 * 8) - player.coords;
+			player.coords += Vector2(106 * 8, 25 * 8) - player.coords;
+			cheated = true;
+		}
+		break;
+	case SDLK_2:
+		if (!paused && !transitioning && !player.teleporting) {
+			cb.player_cam += Vector2(147 * 8, 26 * 8) - player.coords;
+			player.coords += Vector2(147 * 8, 26 * 8) - player.coords;
+			cheated = true;
+		}
+		break;
+	case SDLK_3:
+		if (!paused && !transitioning && !player.teleporting) {
+			cb.player_cam += Vector2(212 * 8, 25 * 8) - player.coords;
+			player.coords += Vector2(212 * 8, 25 * 8) - player.coords;
+			cheated = true;
+		}
 		break;
 	//case SDLK_k: sGameInfo::saveGameInfo(player, Game::instance->time, save_state, show, status_change_time); break;
 	//case SDLK_l: sGameInfo::loadGameInfo(player, Game::instance->time, save_state, show, status_change_time); break;
+
+		//if (player.coords.x > 212 * 8) checkpoint = Vector2(212 * 8, 25 * 8);		// checkpoint 3
+		//else if (player.coords.x > 147 * 8) checkpoint = Vector2(147 * 8, 26 * 8);		// checkpoint 2
+		//else if (player.coords.x > 106 * 8) checkpoint = Vector2(106 * 8, 25 * 8);	// checkpoint 1
 	}
 }
 

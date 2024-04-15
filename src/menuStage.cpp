@@ -45,7 +45,7 @@ void menuStage::onEnter() {
 	transitioning = false;
 	transition_start = Game::instance->time;
 	tr_in = true;
-	if (win) {
+	if (win && !gameStage_0::instance->cheated) {
 		saveScore();
 	}
 	bgmusic = Game::instance->synth.playSample("data/sfx/menubgm.wav", 1, true);
@@ -77,12 +77,12 @@ void menuStage::render(Image& fb) {
 		fb.drawImage(Game::instance->title_screen, 0, 0);
 		fb.drawImage(Game::instance->keyset, 88, 69, Area(17 * (int(Game::instance->time * 3 / 2) % 2), 17, 17, 17));
 	}
-	if (besttime > 0 ) {
+	if (besttime > 0) {
 		std::string msg;
-		if (newbest) msg = "NEW BEST! ";
+		if (newbest && !gameStage_0::instance->cheated) msg = "NEW BEST! ";
 		else msg = "Your best time: ";
-		fb.drawText(msg + toString(besttime), 37 + newbest * 12, 110, Game::instance->minifont_b, 4, 6);
-		fb.drawText(msg + toString(besttime), 36 + newbest * 12, 109, Game::instance->minifont, 4, 6);
+		fb.drawText(msg + toString(besttime), 37 + newbest * !gameStage_0::instance->cheated * 12, 110, Game::instance->minifont_b, 4, 6);
+		fb.drawText(msg + toString(besttime), 36 + newbest * !gameStage_0::instance->cheated * 12, 109, Game::instance->minifont, 4, 6);
 	}
 
 

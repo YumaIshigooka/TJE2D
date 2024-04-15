@@ -47,7 +47,6 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	minifont_b.loadTGA("data/mini-font-black-4x6.tga");
 	bigfont.loadTGA("data/big-font-white-14x18.tga");
 
-	sprite.loadTGA("data/spritesheet.tga");
 	sprite_mini.loadTGA("data/player_mini.tga");
 	tileset.loadTGA("data/paper-tileset.tga");
 	keyset.loadTGA("data/keys_tileset.tga");
@@ -70,7 +69,6 @@ Game::Game(int window_width, int window_height, SDL_Window* window)
 	title_screen.loadTGA("data/title_screen.tga");
 	pause_screen.loadTGA("data/pause_screen.tga");
 	end_screen.loadTGA("data/end_screen.tga");
-	revert_overlay.loadTGA("data/bg.tga");
 
 
 

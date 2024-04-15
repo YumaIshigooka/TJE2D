@@ -36,7 +36,7 @@ public:
 	Image font, minifont, bigfont, minifont_b, font_b;
 
 	// Sprite/Tile Sets
-	Image sprite, sprite_mini;
+	Image sprite_mini;
 	Image explosion, grounding;
 	Image tileset;
 	Image keyset, select_arrows;
@@ -46,7 +46,7 @@ public:
 	Image tutorial_help1, tutorial_help2, tutorial_help3, tutorial_help4, tutorial_help5, tutorial_help6, tutorial_help7;
 
 	// Other
-	Image title_screen, pause_screen, revert_overlay, bgmap, end_screen;
+	Image title_screen, pause_screen, bgmap, end_screen;
 	Color bgcolor;
 
 	//audio
